@@ -35,9 +35,6 @@ end
 
 function signalFuncs.Fire(self, ...)
 	for _, connection in pairs(self._connections) do
-		if connection._fromScript.Parent == nil then
-			connection:Disconnect()
-		end
 		if connection.Function then
 			local thread = coroutine.create(connection.Function)
 			coroutine.resume(thread, ...)
@@ -47,9 +44,6 @@ end
 
 function signalFuncs.FireNoYield(self, ...)
 	for _, connection in pairs(self._connections) do
-		if connection._fromScript and connection._fromScript.Parent == nil then
-			connection:Disconnect()
-		end
 		if connection.Function then
 			local yields = doesYield(connection.Function, ...)
 			if yields then
@@ -77,12 +71,9 @@ end
 
 function signalFuncs.Connect(self, givenFunction)
 	assert(typeof(givenFunction) == "function", "You need to give a function.")
-	
-	local fromScript = getfenv(givenFunction).script
-	
+		
 	local connection = setmetatable({
 		Function = givenFunction;
-		_fromScript = fromScript;
 		Connected = true;
 	}, {
 		__index = connectionFuncs;
