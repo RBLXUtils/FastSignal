@@ -1,8 +1,7 @@
 local runService = game:GetService("RunService")
 
 local Signal = {}
-local signalFuncs = {}
-local connectionFuncs = {}
+Signal.__index = Signal
 
 local function doesYield(func, ...)
 	local packed = table.pack(...)
@@ -15,25 +14,24 @@ local function doesYield(func, ...)
 	return not completed
 end
 
-
 function Signal.new()
-	return setmetatable({
-		_connections = {};
-	}, {
-		__index = signalFuncs
-	})
+
+	local self = setmetatable({
+		_connections = {}
+	}, Signal)
+
+	return self
 end
 
-function signalFuncs.Destroy(self)
+function Signal:Destroy()
 	for i, connection in ipairs(self._connections) do
 		connection:Disconnect()
 		self._connections[i] = nil
 	end
-	setmetatable(self, nil)
-	table.clear(self)
+	self = nil
 end
 
-function signalFuncs.Fire(self, ...)
+function Signal:Fire(...)
 	for _, connection in pairs(self._connections) do
 		if connection.Function then
 			local thread = coroutine.create(connection.Function)
@@ -42,7 +40,7 @@ function signalFuncs.Fire(self, ...)
 	end
 end
 
-function signalFuncs.FireNoYield(self, ...)
+function Signal:FireNoYield(...)
 	for _, connection in pairs(self._connections) do
 		if connection.Function then
 			local yields = doesYield(connection.Function, ...)
@@ -53,14 +51,14 @@ function signalFuncs.FireNoYield(self, ...)
 	end
 end
 
-function signalFuncs.Wait(self)
-	local fired = false;
+function Signal:Wait()
+	local fired = false
 	
 	local connection = self:Connect(function()
 		fired = true
 	end)
-	local startTime = os.clock();
-	
+
+	local startTime = os.clock()
 	repeat
 		runService.Stepped:Wait()
 	until fired or not connection.Connected
@@ -69,23 +67,20 @@ function signalFuncs.Wait(self)
 	return os.clock() - startTime
 end
 
-function signalFuncs.Connect(self, givenFunction)
+function Signal:Connect(givenFunction)
 	assert(typeof(givenFunction) == "function", "You need to give a function.")
-		
-	local connection = setmetatable({
-		Function = givenFunction;
-		Connected = true;
-	}, {
-		__index = connectionFuncs;
-	})
-	table.insert(self._connections, connection)
+	
+	local connection = {
+		Function = givenFunction,
+		Connected = true
+	}
+	table.insert(self, #self + 1, connection)
+
 	return connection
 end
 
-function connectionFuncs.Disconnect(self)
-	self.Function = nil;
-	self.Connected = false
-	setmetatable(self, nil)
+function Signal:Disconnect()
+	table.clear(self._connections)
 end
 
 
