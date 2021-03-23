@@ -1,41 +1,109 @@
-local RunService = game:GetService('RunService');
+local runService = game:GetService("RunService")
 
-local Signal = { };
-Signal.__index = Signal;
+type Function = () -> any
+type Connection = {
+    new: () -> Connection,
+    Connect: (Connection, Function) -> Connection,
+    Disconnect: (Connection),
+    Wait: (Connection) -> number,
+    _function: Function,
+    Connected: boolean,
+}
+type selfSignal = {
+    new: () -> selfSignal,
+    Destroy: () -> any,
+    Fire: (Function)
+    
+}
 
-function Signal.Disconnect(self)
-	table.remove(self._event, table.find(self._event, self._callback));
-end;
+local Signal = {}
+Signal.__index = Signal
+Signal.ClassName = "Signal"
 
-local Event = { };
-Event.__index = Event;
+local function doesYield(func, ...): boolean
+    local packed = table.pack(...)
+    local completed = false
+    
+    local thread: thread = coroutine.create(function()
+        func(table.unpack(packed))
+        completed = true
+    end)
+    
+    coroutine.resume(thread)
+    return not completed
+end
 
-function Event.Connect(self, callback)
-	table.insert(self, #self + 1, callback);
+function Signal.new(): selfSignal
+    local self = setmetatable({
+        Active = true;
+    }, Signal)
+
+    return self
+end
+
+function Signal:Connect(fun: Function)
+    if not self.Active then return end
+    local conn = setmetatable({
+        Connected = true;
+        _function = fun;
+        _fromSignal = self
+    }, Signal)
+    table.insert(self, conn)
+    return conn
+end
+
+function Signal:IsA(...)
+    return Signal.ClassName == ...
+end
+
+function Signal:Destroy()
+    self.Active = false
+    for index = 1, #self do
+        self[index]._function = nil
+        self[index].Connected = false
+        self[index]._fromSignal = nil
+        self[index] = nil
+    end
+end
+
+function Signal:Fire(...)
+   for index = 1, #self do
+		if self[index].Connected then
+			local thread = coroutine.create(self[index]._function)
+			coroutine.resume(thread, ...)
+		end
+	end
+end
+
+function Signal:FireNoYield(...)
+    for index = 1, #self do
+        if self[index].Connected then
+            assert(not doesYield(self[index]._function), "A connection yielded! :FireNoYield() doesn't allow that!")
+        end
+    end
+end
+
+function Signal:Wait(): number
+    local fired = false
+    local conn = self:Connect(function()
+        fired = true
+    end)
+    local startTime = os.clock()
+    repeat
+        runService.Heartbeat:Wait()
+    until fired or self.Active == false
+    conn:Disconnect()
+    return os.clock() - startTime
+end
+
+function Signal:Disconnect()
+	if not self._function or not self.Connected then return end
+	local index = table.find(self._fromSignal, self)
+	if not index then return end
 	
-	return setmetatable({ _event = self, _callback = callback }, Signal);
-end;
+	self._function = nil
+	self.Connected = false
+	table.remove(self._fromSignal, index)
+end
 
-function Event.Fire(self, ...)
-	for index = 1, #self do
-		local thread = coroutine.create(self[index]);
-		coroutine.resume(thread, ...);
-	end;
-	
-	self._lastFire = os.clock();
-end;
-
-function Event.Wait(self)
-	local init = os.clock();
-	
-	repeat
-		local delta = os.clock() - self._lastFire;
-		local beat = (os.clock() - init) + RunService.Heartbeat:Wait();
-	until delta < beat;
-	
-	return os.clock() - init;
-end;
-
-function Event.new()
-	return setmetatable({ _lastFire = 0; }, Event);
-end;
+return Signal
