@@ -1,88 +1,41 @@
-local runService = game:GetService("RunService")
+local RunService = game:GetService('RunService');
 
-local Signal = {}
-Signal.__index = Signal
+local Signal = { };
+Signal.__index = Signal;
 
-local function doesYield(func, ...)
-	local packed = table.pack(...)
-	local completed = false
-	local thread = coroutine.create(function()
-		func(table.unpack(packed))
-		completed = true
-	end)
-	coroutine.resume(thread)
-	return not completed
-end
+function Signal.Disconnect(self)
+	table.remove(self._event, table.find(self._event, self._callback));
+end;
 
-function Signal.new()
+local Event = { };
+Event.__index = Event;
 
-	local self = setmetatable({
-		_connections = {}
-	}, Signal)
-
-	return self
-end
-
-function Signal:Destroy()
-	for i, connection in ipairs(self._connections) do
-		connection:Disconnect()
-		self._connections[i] = nil
-	end
-	self = nil
-end
-
-function Signal:Fire(...)
-	for _, connection in pairs(self._connections) do
-		if connection.Function then
-			local thread = coroutine.create(connection.Function)
-			coroutine.resume(thread, ...)
-		end
-	end
-end
-
-function Signal:FireNoYield(...)
-	for _, connection in pairs(self._connections) do
-		if connection.Function then
-			local yields = doesYield(connection.Function, ...)
-			if yields then
-				error(":FireQueueNoYield() doesn't allow any connections to yield! Script interrupted!")
-			end
-		end
-	end
-end
-
-function Signal:Wait()
-	local fired = false
+function Event.Connect(self, callback)
+	table.insert(self, #self + 1, callback);
 	
-	local connection = self:Connect(function()
-		fired = true
-	end)
+	return setmetatable({ _event = self, _callback = callback }, Signal);
+end;
 
-	local startTime = os.clock()
+function Event.Fire(self, ...)
+	for index = 1, #self do
+		local thread = coroutine.create(self[index]);
+		coroutine.resume(thread, ...);
+	end;
+	
+	self._lastFire = os.clock();
+end;
+
+function Event.Wait(self)
+	local init = os.clock();
+	
 	repeat
-		runService.Stepped:Wait()
-	until fired or not connection.Connected
-		
-	connection:Disconnect()
-	return os.clock() - startTime
-end
-
-function Signal:Connect(givenFunction)
-	assert(typeof(givenFunction) == "function", "You need to give a function.")
+		local delta = os.clock() - self._lastFire;
+		local beat = (os.clock() - init) + RunService.Heartbeat:Wait();
+	until delta < beat;
 	
-	local connection = {
-		Function = givenFunction,
-		Connected = true
-	}
-	table.insert(self, #self + 1, connection)
+	return os.clock() - init;
+end;
 
-	return connection
-end
-
-function Signal:Disconnect()
-	table.clear(self._connections)
-end
-
-
-
-return Signal
+function Event.new()
+	return setmetatable({ _lastFire = 0; }, Event);
+end;
