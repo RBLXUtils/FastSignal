@@ -83,17 +83,16 @@ function Signal:FireNoYield(...)
     end
 end
 
-function Signal:Wait(): number
-    local fired = false
-    local conn = self:Connect(function()
-        fired = true
+function Signal:Wait(): any
+    local thread = coroutine.running()
+    
+    local conn
+    conn = self:Connect(function(...)
+        conn:Disconnect()
+        coroutine.resume(thread, ...)
     end)
-    local startTime = os.clock()
-    repeat
-        runService.Heartbeat:Wait()
-    until fired or self.Active == false
-    conn:Disconnect()
-    return os.clock() - startTime
+
+    return coroutine.yield()
 end
 
 function Signal:Disconnect()
