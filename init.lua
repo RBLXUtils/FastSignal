@@ -1,108 +1,115 @@
 local runService = game:GetService("RunService")
 
-type Function = () -> any
-type Connection = {
-    new: () -> Connection,
-    Connect: (Connection, Function) -> Connection,
-    Disconnect: (Connection),
-    Wait: (Connection) -> number,
-    _function: Function,
-    Connected: boolean,
-}
-type selfSignal = {
-    new: () -> selfSignal,
-    Destroy: () -> any,
-    Fire: (Function)
+local c_yield = coroutine.yield
+local c_running = coroutine.running
+local c_resume = coroutine.resume
+local c_create = coroutine.create
+local os_clock = os.clock
+local table_find = table.find
+local array_remove = function(Table, idx)
+    local count = #Table
     
-}
+    Table[idx] = Table[count]
+    Table[count] = nil
+end
 
-local Signal = {}
-Signal.__index = Signal
-Signal.ClassName = "Signal"
+--\\ Yes, I micro-optimized it... Whatever.
 
-local function doesYield(func, ...): boolean
-    local packed = table.pack(...)
-    local completed = false
-    
-    local thread: thread = coroutine.create(function()
-        func(table.unpack(packed))
-        completed = true
+local Signal = {};
+Signal.__index = Signal;
+
+local function runNoYield(func, ...)
+    local yields = true;
+    local args = ...
+    local thread = coroutine.create(function()
+        func(args)
+        yields = false;
     end)
-    
     coroutine.resume(thread)
-    return not completed
+
+    if yields then
+        coroutine.yield(thread)
+        error("Function yielded!")
+    end
+
+    return yields
 end
 
-function Signal.new(): selfSignal
-    local self = setmetatable({
+function Signal.new()
+    return setmetatable({
         Active = true;
+        _lastFired = os.clock();
+        _functions = {};
     }, Signal)
-
-    return self
 end
 
-function Signal:Connect(fun: Function)
-    if not self.Active then return end
+function Signal:GetLastFired()
+    return self._lastFired
+end
+
+function Signal:Connect(func)
     local conn = setmetatable({
         Connected = true;
-        _function = fun;
-        _fromSignal = self
+        _func = func;
+        _signal = self;
     }, Signal)
-    table.insert(self, conn)
+
+    table.insert(self._functions, conn)
     return conn
 end
 
-function Signal:IsA(...)
-    return Signal.ClassName == ...
-end
+function Signal:Disconnect()
+    if not self.Connected then return end
 
-function Signal:Destroy()
-    self.Active = false
-    for index = 1, #self do
-        self[index]._function = nil
-        self[index].Connected = false
-        self[index]._fromSignal = nil
-        self[index] = nil
-    end
+    local _signal = self._signal
+    local _functions = _signal._functions
+
+    local connIndex = table_find(_functions, self)
+    if not connIndex then return end
+
+    array_remove(_functions, connIndex)
+    self.Connected = false
+    self._signal = nil
 end
 
 function Signal:Fire(...)
-   for index = 1, #self do
-		if self[index].Connected then
-			local thread = coroutine.create(self[index]._function)
-			coroutine.resume(thread, ...)
-		end
-	end
-end
+    local _functions = self._functions
 
-function Signal:FireNoYield(...)
-    for index = 1, #self do
-        if self[index].Connected then
-            assert(not doesYield(self[index]._function), "A connection yielded! :FireNoYield() doesn't allow that!")
-        end
+    for i = 1, #_functions do
+        c_resume(c_create(_functions[i]._func), ...)
+        --\\ No, I can't use coroutine.wrap;
     end
 end
 
-function Signal:Wait(): any
-    local thread = coroutine.running()
-    
-    local conn
-    conn = self:Connect(function(...)
-        conn:Disconnect()
-        coroutine.resume(thread, ...)
-    end)
+function Signal:FireNoYield(...)
+    local _functions = self._functions
 
-    return coroutine.yield()
+    for i = 1, #_functions do
+        runNoYield(_functions[i]._func, ...)
+    end
 end
 
-function Signal:Disconnect()
-	if not self._function or not self.Connected then return end
-	local index = table.find(self._fromSignal, self)
-	if not index then return end
-	
-	self._function = nil
-	self.Connected = false
-	table.remove(self._fromSignal, index)
+function Signal:Wait()
+    local thread = c_running()
+    
+    local conn;
+    conn = self:Connect(function(...)
+        conn:Disconnect()
+        c_resume(thread, ...)
+    end)
+    
+    return c_yield()
+end
+
+function Signal:Destroy()
+    local _functions = self._functions
+    local count = #_functions
+
+    self.Active = false
+    for i = 1, count do
+        _functions[i]:Disconnect()
+    end
+    table.clear(_functions) --idk don't ask me;
 end
 
 return Signal
