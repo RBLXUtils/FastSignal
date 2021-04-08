@@ -28,7 +28,6 @@ local function runNoYield(func, ...)
     coroutine.resume(thread)
 
     if yields then
-        coroutine.yield(thread)
         error("Function yielded!")
     end
 
