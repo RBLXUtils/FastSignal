@@ -6,6 +6,7 @@ local c_resume = coroutine.resume
 local c_create = coroutine.create
 local os_clock = os.clock
 local table_find = table.find
+local table_insert = table.insert
 local array_remove = function(Table, idx)
     local count = #Table
     
@@ -73,11 +74,14 @@ end
 
 function Signal:Fire(...)
     local _functions = self._functions
-
+    local threads = {};
     for i = 1, #_functions do
-        c_resume(c_create(_functions[i]._func), ...)
-        --\\ No, I can't use coroutine.wrap;
+        table_insert(threads, c_create(_functions[i]._func))
     end
+    for i = 1, #threads do
+        c_resume(threads[i], ...)
+    end
+    
 end
 
 function Signal:FireNoYield(...)
@@ -106,9 +110,12 @@ function Signal:Destroy()
 
     self.Active = false
     for i = 1, count do
-        _functions[i]:Disconnect()
+        local conn = _functions[i]
+        conn.Connected = false;
+        conn._func = nil;
+        conn._signal = nil;
     end
-    table.clear(_functions) --idk don't ask me;
+    table.clear(_functions)
 end
 
 return Signal
