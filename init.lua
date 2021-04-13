@@ -19,6 +19,7 @@ end
 local Signal = {};
 Signal.__index = Signal;
 
+--[[
 local function runNoYield(func, ...)
     local args = ...;
 
@@ -36,6 +37,7 @@ local function runNoYield(func, ...)
     end
     return table.unpack(toReturn)
 end
+]]
 
 function Signal.new()
     return setmetatable({
@@ -88,6 +90,7 @@ function Signal.Fire(self, ...)
     table.clear(threads)
 end
 
+--[[
 function Signal.FireNoYield(self, ...)
     local _functions = self._functions
 
@@ -96,6 +99,7 @@ function Signal.FireNoYield(self, ...)
     end
     --\\ deprecated!
 end
+]]
 
 function Signal.Wait(self)
     local thread = c_running()
