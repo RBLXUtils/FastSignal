@@ -24,10 +24,10 @@ local function runNoYield(func, ...)
 
     local toReturn;
 
-    local thread = coroutine.create(function()
+    local thread = c_create(function()
         toReturn = table.pack(func(arguments))
     end)
-    coroutine.resume(thread)
+    c_resume(thread)
     
     local status = coroutine.status(thread)
     if status ~= "dead" then
@@ -56,7 +56,7 @@ function Signal.Connect(self, func)
         _signal = self;
     }, Signal)
 
-    table.insert(self._functions, conn)
+    table_insert(self._functions, conn)
     return conn
 end
 
@@ -111,10 +111,9 @@ end
 
 function Signal.Destroy(self)
     local _functions = self._functions
-    local count = #_functions
 
     self.Active = false
-    for i = 1, count do
+    for i = 1, #_functions do
         local conn = _functions[i]
         conn.Connected = false;
         conn._func = nil;
