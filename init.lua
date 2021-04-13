@@ -79,7 +79,7 @@ end
 
 function Signal.Fire(self, ...)
 	local _functions = self._functions
-	local threads = {};
+	local threads = self._threads;
 	for i = 1, #_functions do
 		table_insert(threads, c_create(_functions[i]._func))
 	end
@@ -122,11 +122,9 @@ function Signal.Destroy(self)
 		conn.Connected = false;
 		conn._func = nil;
 		conn._signal = nil;
+		_functions[i] = nil
 	end
-	table.clear(_functions)
 	self._functions = nil;
-	
-	table.clear(self._threads)
 	self._threads = nil;
 end
 
