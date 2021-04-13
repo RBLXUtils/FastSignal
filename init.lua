@@ -20,19 +20,21 @@ local Signal = {};
 Signal.__index = Signal;
 
 local function runNoYield(func, ...)
-    local yields = true;
-    local args = ...
+    local args = ...;
+
+    local toReturn;
+
     local thread = coroutine.create(function()
-        func(args)
-        yields = false;
+        toReturn = table.pack(func(arguments))
     end)
     coroutine.resume(thread)
-
-    if yields then
-        error("Function yielded!")
+    
+    local status = coroutine.status(thread)
+    if status ~= "dead" then
+        error("Function yielded! Not allowed!")
+        --\\ can't figure out a way of stopping the function completely as of the moment.
     end
-
-    return yields
+    return table.unpack(toReturn)
 end
 
 function Signal.new()
@@ -43,11 +45,11 @@ function Signal.new()
     }, Signal)
 end
 
-function Signal:GetLastFired()
+function Signal.GetLastFired(self)
     return self._lastFired
 end
 
-function Signal:Connect(func)
+function Signal.Connect(self, func)
     local conn = setmetatable({
         Connected = true;
         _func = func;
@@ -58,21 +60,23 @@ function Signal:Connect(func)
     return conn
 end
 
-function Signal:Disconnect()
+function Signal.Disconnect(self)
     if not self.Connected then return end
 
     local _signal = self._signal
     local _functions = _signal._functions
+    
+    self.Connected = false;
+    self._signal = nil;
+    self._func = nil;
 
     local connIndex = table_find(_functions, self)
-    if not connIndex then return end
+    if not connIndex then return end;
 
-    array_remove(_functions, connIndex)
-    self.Connected = false
-    self._signal = nil
+    array_remove(_functions, connIndex)  
 end
 
-function Signal:Fire(...)
+function Signal.Fire(self, ...)
     local _functions = self._functions
     local threads = {};
     for i = 1, #_functions do
@@ -81,18 +85,19 @@ function Signal:Fire(...)
     for i = 1, #threads do
         c_resume(threads[i], ...)
     end
-    
+    table.clear(threads)
 end
 
-function Signal:FireNoYield(...)
+function Signal.FireNoYield(self, ...)
     local _functions = self._functions
 
     for i = 1, #_functions do
-        runNoYield(_functions[i]._func, ...)
+        runNoYield(_functions[i], ...)
     end
+    --\\ deprecated!
 end
 
-function Signal:Wait()
+function Signal.Wait(self)
     local thread = c_running()
     
     local conn;
@@ -104,7 +109,7 @@ function Signal:Wait()
     return c_yield()
 end
 
-function Signal:Destroy()
+function Signal.Destroy(self)
     local _functions = self._functions
     local count = #_functions
 
