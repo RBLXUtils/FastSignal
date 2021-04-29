@@ -1,131 +1,55 @@
-local runService = game:GetService("RunService")
-
-local c_yield = coroutine.yield
-local c_running = coroutine.running
-local c_resume = coroutine.resume
-local c_create = coroutine.create
-local os_clock = os.clock
-local table_find = table.find
-local table_insert = table.insert
-local array_remove = function(Table, idx)
-	local count = #Table
-
-	Table[idx] = Table[count]
-	Table[count] = nil
-end
-
---\\ Yes, I micro-optimized it... Whatever.
-
 local Signal = {};
 Signal.__index = Signal;
+Signal.ClassName = 'Signal';
 
---[[
-local function runNoYield(func, ...)
-    local args = ...;
-    local toReturn;
-    local thread = c_create(function()
-        toReturn = table.pack(func(arguments))
-    end)
-    c_resume(thread)
-    
-    local status = coroutine.status(thread)
-    if status ~= "dead" then
-        error("Function yielded! Not allowed!")
-        --\\ can't figure out a way of stopping the function completely as of the moment.
-    end
-    return table.unpack(toReturn)
+function Signal.__call(self, _, ...)
+	return self:Connect(...);
 end
-]]
 
 function Signal.new()
-	return setmetatable({
+	local self = setmetatable({
+		_bindableEvent = Instance.new('BindableEvent');
 		Active = true;
-		_lastFired = os.clock();
-		_functions = {};
-		_threads = {};
-	}, Signal)
+	}, Signal);
+	self._event = self._bindableEvent.Event;
+	return self;
 end
 
-function Signal.GetLastFired(self)
-	return self._lastFired
-end
+function Signal:Connect(func)
+	if not self.Active then return end;
 
-function Signal.Connect(self, func)
-	local conn = setmetatable({
-		Connected = true;
-		_func = func;
-		_signal = self;
-	}, Signal)
-
-	table_insert(self._functions, conn)
-	return conn
-end
-
-function Signal.Disconnect(self)
-	if not self.Connected then return end
-
-	local _signal = self._signal
-	local _functions = _signal._functions
-
-	self.Connected = false;
-	self._signal = nil;
-	self._func = nil;
-
-	local connIndex = table_find(_functions, self)
-	if not connIndex then return end;
-
-	array_remove(_functions, connIndex)  
-end
-
-function Signal.Fire(self, ...)
-	local _functions = self._functions
-	local threads = self._threads;
-	for i = 1, #_functions do
-		table_insert(threads, c_create(_functions[i]._func))
-	end
-	for i = 1, #threads do
-		c_resume(threads[i], ...)
-		threads[i] = nil;
-	end
-end
-
---[[
-function Signal.FireNoYield(self, ...)
-    local _functions = self._functions
-    for i = 1, #_functions do
-        runNoYield(_functions[i], ...)
-    end
-    --\\ deprecated!
-end
-]]
-
-function Signal.Wait(self)
-	local thread = c_running()
-
-	local conn;
-	conn = self:Connect(function(...)
-		conn:Disconnect()
-		c_resume(thread, ...)
+	return self._event:Connect(function(...)
+		func(table.unpack(...));
 	end)
-
-	return c_yield()
 end
 
-function Signal.Destroy(self)
-	if not self.Active then return end
-	
-	local _functions = self._functions
+function Signal:ConnectParallel(func)
+	if not self.Active then return end;
 
-	self.Active = false
-	for i = 1, #_functions do
-		local conn = _functions[i]
-		conn.Connected = false;
-		conn._func = nil;
-		conn._signal = nil;
-		_functions[i] = nil
-	end
-	self._functions = nil;
-	self._threads = nil;
+	return self._event:ConnectParallel(function(...)
+		func(table.unpack(...));
+	end)
 end
 
-return Signal
+function Signal:Fire(...)
+	if not self.Active then return end;
+
+	self._bindableEvent:Fire(table.pack(...));
+end
+
+function Signal:Wait()
+	if not self.Active then return end;
+
+	return table.unpack(self._event:Wait());
+end
+
+function Signal:Destroy()
+	if not self.Active then return end;
+
+	self.Active = false;
+	self._event = nil;
+	self._bindableEvent:Destroy();
+	self._bindableEvent = nil;
+end
+
+return Signal;
