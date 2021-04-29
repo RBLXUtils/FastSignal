@@ -1,3 +1,5 @@
+local HttpService = game:GetService('HttpService');
+
 local Signal = {};
 Signal.__index = Signal;
 Signal.ClassName = 'Signal';
@@ -18,29 +20,37 @@ end
 function Signal:Connect(func)
 	if not self.Active then return end;
 
-	return self._event:Connect(function(...)
-		func(table.unpack(...));
+	return self._event:Connect(function(fireId)
+		func(table.unpack(self[fireId]));
 	end)
 end
 
 function Signal:ConnectParallel(func)
 	if not self.Active then return end;
 
-	return self._event:ConnectParallel(function(...)
-		func(table.unpack(...));
+	return self._event:ConnectParallel(function(fireId)
+		func(table.unpack(self[fireId]));
 	end)
 end
 
 function Signal:Fire(...)
 	if not self.Active then return end;
 
-	self._bindableEvent:Fire(table.pack(...));
+	local fireId = os.clock();
+	if self[fireId] then return self:Fire(...) end;
+
+	self[fireId] = table.pack(...);
+	self._bindableEvent:Fire(fireId);
+	self[fireId] = nil;
 end
 
 function Signal:Wait()
 	if not self.Active then return end;
 
-	return table.unpack(self._event:Wait());
+	local fireId = self._event:Wait();
+	if not fireId then return end;
+
+	return table.unpack(self[fireId]);
 end
 
 function Signal:Destroy()
