@@ -19,10 +19,15 @@ end
 function Signal:Fire(...)
 	if not self._bindable then return end;
 
-	local fire_id = #self + 1;
-	self[fire_id] = table.pack(...);
+	local fire_id;
+	if ... ~= nil then
+		fire_id = #self + 1;
+		self[fire_id] = table.pack(...);
+	end
 
 	self._bindable:Fire(fire_id);
+
+	if ... == nil then return end;
 	self[fire_id] = nil;
 end
 
@@ -34,6 +39,9 @@ function Signal:Connect(handle)
 	if not self._bindable then return end;
 
 	return self._bindable.Event:Connect(function(fire_id)
+		if fire_id == nil then
+			return handle()
+		end
 		return handle(
 			table.unpack(
 				self[fire_id]
@@ -46,6 +54,9 @@ function Signal:ConnectParallel(handle)
 	if not self._bindable then return end;
 
 	return self._bindable.Event:ConnectParallel(function(fire_id)
+		if fire_id == nil then
+			return handle()
+		end
 		return handle(
 			table.unpack(
 				self[fire_id]
@@ -57,11 +68,12 @@ end
 function Signal:Wait()
 	if not self._bindable then return end;
 
+	local fire_id = self._bindable.Event:Wait()
+	if fire_id == nil then return end;
+	
 	return table.unpack(
-		self[
-			self._bindable:Wait()
-		]
-	)
+		self[fire_id]
+	);
 end
 
 function Signal:Destroy()
