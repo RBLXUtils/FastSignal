@@ -6,10 +6,11 @@
 	
 			Signal.new()
 				Returns: ScriptSignal
-				Parameters: nil
+				Parameters: Signal Name: string (optional)
 				
 				Description:
 					\\ Creates a new ScriptSignal object.
+					\\ Signal Name is used for printing, it's not needed.
 		
 	ScriptSignal:
 	
@@ -17,6 +18,9 @@
 		
 			Signal.ClassName
 				\\ Always "Signal".
+				
+			Signal.Name
+				\\ The name you give it, if you do, on Signal.new
 				
 		Functions:
 		
@@ -116,6 +120,10 @@
 
 local Signal = {};
 Signal.__index = Signal;
+Signal.__tostring = function(self)
+	return 'Signal '.. self.Name
+	--\\ Printing!
+end
 Signal.ClassName = "Signal";
 
 function Signal:IsA(...)
@@ -126,14 +134,21 @@ function Signal:IsActive()
 	return self._bindable ~= nil;
 end
 
-function Signal.new()
+
+function Signal.new(name)
 	return setmetatable({
-		_bindable = Instance.new('BindableEvent')
+		_bindable = Instance.new('BindableEvent');
+		Name = typeof(name) == 'string' and name or '';
 	}, Signal)
 end
 
 function Signal:Fire(...)
-	if not self._bindable then return end;
+	if not self._bindable then
+		warn(
+			("Cannot fire destroyed signal! %s"):format(self.Name)
+		)
+		return
+	end;
 
 	local fire_id;
 	if ... ~= nil then
@@ -152,7 +167,12 @@ function Signal.__call(self, _, ...)
 end
 
 function Signal:Connect(handle)
-	if not self._bindable then return end;
+	if not self._bindable then
+		warn(
+			("Cannot connect to destroyed signal! %s"):format(self.Name)
+		)
+		return
+	end;
 	assert(typeof(handle) == 'function', 'Attempt to connect failed: Passed value is not a function')
 
 	return self._bindable.Event:Connect(function(fire_id)
@@ -169,7 +189,12 @@ function Signal:Connect(handle)
 end
 
 function Signal:ConnectParallel(handle)
-	if not self._bindable then return end;
+	if not self._bindable then
+		warn(
+			("Cannot connect to destroyed signal! %s"):format(self.Name)
+		)
+		return
+	end;
 	assert(typeof(handle) == 'function', 'Attempt to connect failed: Passed value is not a function')
 
 	return self._bindable.Event:ConnectParallel(function(fire_id)
@@ -186,8 +211,12 @@ function Signal:ConnectParallel(handle)
 end
 
 function Signal:Wait()
-	if not self._bindable then return end;
-
+	if not self._bindable then
+		warn(
+			("Cannot :Wait to destroyed signal! %s"):format(self.Name)
+		)
+		return
+	end;
 	local fire_id = self._bindable.Event:Wait()
 	if fire_id == nil then return end;
 	
@@ -198,7 +227,12 @@ function Signal:Wait()
 end
 
 function Signal:Destroy()
-	if not self._bindable then return end;
+	if not self._bindable then
+		warn(
+			("Attempted to :Destroy an already destroyed signal! %s"):format(self.Name)
+		)
+		return
+	end;
 
 	self._bindable:Destroy();
 	self._bindable = nil;
