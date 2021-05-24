@@ -153,6 +153,7 @@ end
 
 function Signal:Connect(handle)
 	if not self._bindable then return end;
+	assert(typeof(handle) == 'function', 'Attempt to connect failed: Passed value is not a function')
 
 	return self._bindable.Event:Connect(function(fire_id)
 		if fire_id == nil then
@@ -169,6 +170,7 @@ end
 
 function Signal:ConnectParallel(handle)
 	if not self._bindable then return end;
+	assert(typeof(handle) == 'function', 'Attempt to connect failed: Passed value is not a function')
 
 	return self._bindable.Event:ConnectParallel(function(fire_id)
 		if fire_id == nil then
