@@ -16,7 +16,7 @@
 	
 		Properties:
 		
-			Signal.ClassName
+			Signal.ClassName (read-only)
 				\\ Always "Signal".
 				
 			Signal.Name
@@ -121,7 +121,10 @@
 local Signal = {};
 Signal.__index = Signal;
 Signal.__tostring = function(self)
-	return 'Signal '.. self.Name
+	return string.format(
+		"Signal %s",
+		self.Name
+	)
 	--\\ Printing!
 end
 Signal.ClassName = "Signal";
