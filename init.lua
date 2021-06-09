@@ -160,9 +160,6 @@ function Signal:Fire(...)
 	end
 
 	self._bindable:Fire(fire_id);
-
-	if ... == nil then return end;
-	self[fire_id] = nil;
 end
 
 function Signal.__call(self, _, ...)
