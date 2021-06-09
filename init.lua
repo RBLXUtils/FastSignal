@@ -120,14 +120,20 @@
 
 local Signal = {};
 Signal.__index = Signal;
-Signal.__tostring = function(self)
+Signal.ClassName = "Signal";
+
+function Signal:__tostring()
 	return string.format(
 		"Signal %s",
 		self.Name
 	)
 	--\\ Printing!
 end
-Signal.ClassName = "Signal";
+
+function Signal:_call(_, ...)
+	return self:Connect(...);
+end
+
 
 function Signal:IsA(...)
 	return ... == self.ClassName;
@@ -162,10 +168,6 @@ function Signal:Fire(...)
 	self._bindable:Fire(fire_id);
 end
 
-function Signal.__call(self, _, ...)
-	return self:Connect(...);
-end
-
 function Signal:Connect(handle)
 	if not self._bindable then
 		warn(
@@ -176,11 +178,12 @@ function Signal:Connect(handle)
 	assert(typeof(handle) == 'function', 'Attempt to connect failed: Passed value is not a function')
 
 	return self._bindable.Event:Connect(function(fire_id)
-		if fire_id == nil then
-			return handle()
+		if (fire_id == nil) or (not self._bindable) then
+			handle()
+			return;
 		end
 		local args = self[fire_id]
-		return handle(
+		handle(
 			table.unpack(
 				args, 1, args.n 
 			)
@@ -198,11 +201,12 @@ function Signal:ConnectParallel(handle)
 	assert(typeof(handle) == 'function', 'Attempt to connect failed: Passed value is not a function')
 
 	return self._bindable.Event:ConnectParallel(function(fire_id)
-		if fire_id == nil then
-			return handle()
+		if (fire_id == nil) or (not self._bindable) then
+			handle()
+			return;
 		end
 		local args = self[fire_id]
-		return handle(
+		handle(
 			table.unpack(
 				args, 1, args.n 
 			)
@@ -219,7 +223,8 @@ function Signal:Wait()
 	end;
 	local fire_id = self._bindable.Event:Wait()
 	if fire_id == nil then return end;
-	
+	if not self._bindable then return end;
+
 	local args = self[fire_id]
 	return table.unpack(
 		args, 1, args.n
@@ -236,6 +241,12 @@ function Signal:Destroy()
 
 	self._bindable:Destroy();
 	self._bindable = nil;
+
+	for index, value in pairs(self) do
+		if type(index) == 'number' then
+			self[index] = nil;
+		end
+	end
 end
 
 return Signal;
