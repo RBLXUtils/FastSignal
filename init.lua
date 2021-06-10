@@ -130,7 +130,7 @@ function Signal:__tostring()
 	--\\ Printing!
 end
 
-function Signal:_call(_, ...)
+function Signal:__call(_, ...)
 	return self:Connect(...);
 end
 
