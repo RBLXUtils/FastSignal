@@ -118,135 +118,171 @@
 				 ^ Beta!
 ]]
 
-local Signal = {};
-Signal.__index = Signal;
-Signal.ClassName = "Signal";
+local HttpService = game:GetService("HttpService")
 
-function Signal:__tostring()
-	return string.format(
-		"Signal %s",
-		self.Name
-	)
-	--\\ Printing!
-end
+local Signal = {}
+Signal.__index = Signal
+Signal.ClassName = "Signal"
+
+
 
 function Signal:__call(_, ...)
-	return self:Connect(...);
+	return self:Connect(...)
 end
 
+function Signal:__tostring()
+	return "Signal ".. self.Name
+end
+
+local function GenerateUniqueID(self)
+	local _args = self._args
+
+	local id = HttpService:GenerateGUID()
+	while _args[id] do
+		id = HttpService:GenerateGUID()
+	end
+
+	return id
+end
 
 function Signal:IsA(...)
-	return ... == self.ClassName;
+	return self.ClassName == ...
 end
-
-function Signal:IsActive()
-	return self._bindable ~= nil;
-end
-
 
 function Signal.new(name)
-	return setmetatable({
-		_bindable = Instance.new('BindableEvent');
-		Name = typeof(name) == 'string' and name or '';
+	local self = setmetatable({
+		Name = typeof(name) == 'string' and name or "",
+		_bindable = Instance.new("BindableEvent"),
+		_args = {}
 	}, Signal)
+
+	--\\ Thanks Quenty for the info,
+	--   Events are fired from the most recently connected, to the
+	--   last connected one. Meaning we can finally do clean up of arguments!
+	
+	self._bindable.Event:Connect(function(fire_id)
+		if not fire_id then
+			return
+		end
+
+		self._args[fire_id] = nil
+
+		if (not self._bindable) and (not next(self._args)) then
+			self._args = nil
+		end
+	end)
+
+	return self
 end
 
 function Signal:Fire(...)
 	if not self._bindable then
-		warn(
-			("Cannot fire destroyed signal! %s"):format(self.Name)
-		)
+		warn("You cannot :Fire a destroyed Signal. ".. self.Name)
 		return
-	end;
-
-	local fire_id;
-	if ... ~= nil then
-		fire_id = #self + 1;
-		self[fire_id] = table.pack(...);
 	end
 
-	self._bindable:Fire(fire_id);
+	local args = table.pack(...)
+	local fire_id
+	if args.n ~= 0 then
+		fire_id = GenerateUniqueID(self)
+		self._args[fire_id] = args
+	end
+
+	self._bindable:Fire(fire_id)
 end
 
-function Signal:Connect(handle)
-	if not self._bindable then
-		warn(
-			("Cannot connect to destroyed signal! %s"):format(self.Name)
-		)
-		return
-	end;
-	assert(typeof(handle) == 'function', 'Attempt to connect failed: Passed value is not a function')
 
-	return self._bindable.Event:Connect(function(fire_id)
-		if (fire_id == nil) or (not self._bindable) then
-			handle()
-			return;
+function Signal:Connect(func)
+	if not self._bindable then
+		warn("You cannot connect to a destroyed Signal. ".. self.Name)
+		return;
+	end
+
+	assert(
+		typeof(func) == 'function',
+		":Connect can only connect a function. ".. self.Name
+	)
+
+
+	self._bindable.Event:Connect(function(fire_id)
+		if fire_id then
+			local args = self._args[fire_id]
+
+			if args then
+				func(
+					table.unpack(args, 1, args.n)
+				)
+				return
+			end
+
+			error("Arguments missing.")
 		end
-		local args = self[fire_id]
-		handle(
-			table.unpack(
-				args, 1, args.n 
-			)
-		)
+
+		func()
 	end)
 end
 
-function Signal:ConnectParallel(handle)
+function Signal:ConnectParallel(func)
 	if not self._bindable then
-		warn(
-			("Cannot connect to destroyed signal! %s"):format(self.Name)
-		)
-		return
-	end;
-	assert(typeof(handle) == 'function', 'Attempt to connect failed: Passed value is not a function')
+		warn("You cannot connect to a destroyed Signal. ".. self.Name)
+		return;
+	end
 
-	return self._bindable.Event:ConnectParallel(function(fire_id)
-		if (fire_id == nil) or (not self._bindable) then
-			handle()
-			return;
+	assert(
+		typeof(func) == 'function',
+		":ConnectParallel can only connect a function. ".. self.Name
+	)
+
+
+	self._bindable.Event:ConnectParallel(function(fire_id)
+		if fire_id then
+			local args = self._args[fire_id]
+
+			if args then
+				func(
+					table.unpack(args, 1, args.n)
+				)
+				return
+			end
+
+			error("Arguments missing.")
 		end
-		local args = self[fire_id]
-		handle(
-			table.unpack(
-				args, 1, args.n 
-			)
-		)
+
+		func()
 	end)
 end
 
 function Signal:Wait()
 	if not self._bindable then
-		warn(
-			("Cannot :Wait to destroyed signal! %s"):format(self.Name)
-		)
+		warn("You cannot :Wait to an destroyed Signal. ".. self.Name)
 		return
-	end;
-	local fire_id = self._bindable.Event:Wait()
-	if fire_id == nil then return end;
-	if not self._bindable then return end;
+	end
 
-	local args = self[fire_id]
-	return table.unpack(
-		args, 1, args.n
-	);
+	local fire_id = self._bindable.Event:Wait()
+
+	if fire_id then
+		local args = self._args[fire_id]
+
+		if args then
+			return table.unpack(args, 1, args.n)
+		end
+
+		error("Arguments missing.")
+	end
 end
 
 function Signal:Destroy()
 	if not self._bindable then
-		warn(
-			("Attempted to :Destroy an already destroyed signal! %s"):format(self.Name)
-		)
-		return
-	end;
+		warn("You cannot destroy an already destroyed Signal. ".. self.Name)
+		return;
+	end
 
-	self._bindable:Destroy();
-	self._bindable = nil;
+	self._bindable:Destroy()
+	self._bindable = nil
 
-	for index, value in pairs(self) do
-		if type(index) == 'number' then
-			self[index] = nil;
-		end
+	if not next(self._args) then
+		self._args = nil
 	end
 end
 
-return Signal;
+return Signal
