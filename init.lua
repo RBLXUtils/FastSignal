@@ -124,7 +124,13 @@ local Signal = {}
 Signal.__index = Signal
 Signal.ClassName = "Signal"
 
-
+local FAST_MODE = false
+	--\\ With FAST_MODE on, the arguments are stored under an increasing index.
+	-- Basically, that means that :Fire is faster, but UN SAFE.
+	-- As long as the Signals you're creating are only fired on one thread, 
+	-- Or even if they're just not supposed to be fired by another dev, then you're safe to enable this.
+	-- Overall, this should only be an issue if there's multiple threads firing at the same time.
+	-- Also note this speed advantage is not gonna impact you for the most part at all.
 
 function Signal:__call(_, ...)
 	return self:Connect(...)
@@ -135,6 +141,11 @@ function Signal:__tostring()
 end
 
 local function GenerateUniqueID(self)
+	if FAST_MODE then
+		self._fireCounter += 1
+		return self._fireCounter
+	end
+
 	local _args = self._args
 
 	local id = HttpService:GenerateGUID()
@@ -149,11 +160,16 @@ function Signal:IsA(...)
 	return self.ClassName == ...
 end
 
+function Signal:IsActive()
+	return self._bindable ~= nil
+end
+
 function Signal.new(name)
 	local self = setmetatable({
 		Name = typeof(name) == 'string' and name or "",
 		_bindable = Instance.new("BindableEvent"),
-		_args = {}
+		_args = {},
+		_fireCounter = FAST_MODE and 0 or nil
 	}, Signal)
 
 	--\\ Thanks Quenty for the info,
