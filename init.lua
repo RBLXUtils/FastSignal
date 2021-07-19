@@ -115,7 +115,7 @@
 			Supports :Fire 'ing inside connections.
 			
 			Supports multi-threading with :ConnectParallel
-				 ^ Beta!
+				 ^ Beta! (should be working just fine now!)
 ]]
 
 local HttpService = game:GetService("HttpService")
@@ -124,6 +124,7 @@ local Signal = {}
 Signal.__index = Signal
 Signal.ClassName = "Signal"
 
+local DEBUG_MODE = true -- is :__tostring() deactivated
 local FAST_MODE = false
 	--\\ With FAST_MODE on, the arguments are stored under an increasing index.
 	-- Basically, that means that :Fire is faster, but UN SAFE.
@@ -132,12 +133,16 @@ local FAST_MODE = false
 	-- Overall, this should only be an issue if there's multiple threads firing at the same time.
 	-- Also note this speed advantage is not gonna impact you for the most part at all.
 
-function Signal:__call(_, ...)
-	return self:Connect(...)
+function Signal:__call(_, func)
+	return self:Connect(func)
 end
 
 function Signal:__tostring()
 	return "Signal ".. self.Name
+end
+
+if DEBUG_MODE then
+	Signal.__tostring = nil
 end
 
 local function GenerateUniqueID(self)
@@ -208,7 +213,8 @@ function Signal:Fire(...)
 end
 
 
-function Signal:Connect(func)
+local function Connect(self, func, isParallel)
+	
 	if not self._bindable then
 		warn("You cannot connect to a destroyed Signal. ".. self.Name)
 		return;
@@ -224,6 +230,10 @@ function Signal:Connect(func)
 		if fire_id then
 			local args = self._args[fire_id]
 
+			if isParallel then
+				task.desynchronize()
+			end
+
 			if args then
 				func(
 					table.unpack(args, 1, args.n)
@@ -232,40 +242,22 @@ function Signal:Connect(func)
 			end
 
 			error("Arguments missing.")
+		end
+
+		if isParallel then
+			task.desynchronize()
 		end
 
 		func()
 	end)
 end
 
+function Signal:Connect(func)
+	return Connect(self, func, false)
+end
+
 function Signal:ConnectParallel(func)
-	if not self._bindable then
-		warn("You cannot connect to a destroyed Signal. ".. self.Name)
-		return;
-	end
-
-	assert(
-		typeof(func) == 'function',
-		":ConnectParallel can only connect a function. ".. self.Name
-	)
-
-
-	self._bindable.Event:ConnectParallel(function(fire_id)
-		if fire_id then
-			local args = self._args[fire_id]
-
-			if args then
-				func(
-					table.unpack(args, 1, args.n)
-				)
-				return
-			end
-
-			error("Arguments missing.")
-		end
-
-		func()
-	end)
+	return Connect(self, func, true)
 end
 
 function Signal:Wait()
