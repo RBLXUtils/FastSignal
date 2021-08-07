@@ -217,7 +217,7 @@ function Signal:Fire(...)
 			continue
 		end
 
-		task.spawn(
+		task.defer(
 			connection._func,
 			...
 		)
