@@ -94,6 +94,10 @@ Signal.__index = Signal
 local Connection = {}
 Connection.__index = Connection
 
+function Signal:__call(_, ...)
+	return self:Connect(...)
+end
+
 function Signal.new()
 	return setmetatable({
 		_active = true,
@@ -127,10 +131,13 @@ function Signal:Connect(func)
 
 	local _head = self._head
 	if _head then
-		_head._next = Connection
-		connection._prev = _head
+		_head._prev = Connection
+		connection._next = _head
 	end
 	self._head = connection
+
+	self._signal = nil
+	self._prev = nil
 
 	return connection
 end
@@ -173,10 +180,6 @@ function Connection:Disconnect()
 	if self == _signal._head then
 		_signal._head = _next
 	end
-
-	-- Safe to wipe:
-	self._signal = nil
-	self._prev = nil
 end
 
 function Signal:Wait()
@@ -192,7 +195,7 @@ function Signal:Wait()
 	connection = self:Connect(function(...)
 		connection:Disconnect()
 
-		task.spawn(
+		task.defer(
 			thread,
 			...
 		)
@@ -214,7 +217,7 @@ function Signal:Fire(...)
 			continue
 		end
 
-		task.defer(
+		task.spawn(
 			connection._func,
 			...
 		)
