@@ -131,9 +131,10 @@ function Signal:Connect(func)
 
 	local _head = self._head
 	if _head then
-		_head._prev = Connection
+		_head._prev = connection
 		connection._next = _head
 	end
+
 	self._head = connection
 
 	self._signal = nil
@@ -175,11 +176,17 @@ function Connection:Disconnect()
 
 	if _prev then
 		_prev._next = _next
-	end
+	else
+		--\\ This connection was the _head,
+		--   therefore we need to update it.
 
-	if self == _signal._head then
 		_signal._head = _next
 	end
+	
+	--\\ Safe to wipe references to:
+
+	self._signal = nil
+	self._prev = nil
 end
 
 function Signal:Wait()
@@ -212,11 +219,6 @@ function Signal:Fire(...)
 
 	local connection = self._head
 	while connection ~= nil do
-		if not connection.Connected then
-			connection = connection._next
-			continue
-		end
-
 		task.defer(
 			connection._func,
 			...
