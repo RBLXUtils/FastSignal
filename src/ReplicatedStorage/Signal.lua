@@ -235,6 +235,7 @@ function Signal:DisconnectAll()
 
 		connection = connection._next
 	end
+	self._head = nil
 end
 
 function Signal:Destroy()
