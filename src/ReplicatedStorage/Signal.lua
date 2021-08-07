@@ -195,7 +195,7 @@ function Signal:Wait()
 	connection = self:Connect(function(...)
 		connection:Disconnect()
 
-		task.defer(
+		task.spawn(
 			thread,
 			...
 		)
