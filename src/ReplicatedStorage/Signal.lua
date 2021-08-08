@@ -43,19 +43,17 @@
 				Description:
 					\\ Disconnects all connections without destroying the Signal.
 
-		Connection:
+	Connection:
 
-			Properties:
+		Properties:
 
-				Connection.Connected
+			Connection.Connected
 							
-			Functions:
+		Functions:
 
-				Connection:Disconnect()
-					Parameters: nil
-					Returns: nil
-					Description:
-						\\ Disconnects a connection.
+			Connection:Disconnect()
+				Description:
+					\\ Disconnects a connection.
 
 		Extra:
 
@@ -89,14 +87,20 @@ local Connection = {}
 Connection.__index = Connection
 
 function Signal:__call(_, ...)
+	if not self:IsActive() then
+		return
+	end
+
 	return self:Connect(...)
 end
 
 function Signal.new()
-	return setmetatable({
+	local self = setmetatable({
 		_active = true,
 		_head = nil
 	}, Signal)
+
+	return self
 end
 
 function Signal:IsActive()
@@ -126,14 +130,10 @@ function Signal:Connect(func)
 	local _head = self._head
 	if _head ~= nil then
 		_head._prev = connection
-		_head._signal = nil
 		connection._next = _head
 	end
 
 	self._head = connection
-
-	self._signal = nil
-	self._prev = nil
 
 	return connection
 end
@@ -161,7 +161,6 @@ function Connection:Disconnect()
 
 	self.Connected = false
 
-	local _signal = self._signal
 	local _next = self._next
 	local _prev = self._prev
 
@@ -174,10 +173,9 @@ function Connection:Disconnect()
 	else
 		--\\ This connection was the _head,
 		--   therefore we need to update the head
-		--   to the connection after this.
+		--   to the connection after this one.
 
-		_next._signal = _signal
-		_signal._head = _next
+		self._signal._head = _next
 	end
 	
 	--\\ Safe to wipe references to:
@@ -227,11 +225,11 @@ end
 function Signal:DisconnectAll()
 	local connection = self._head
 	while connection ~= nil do
+		--connection:Disconnect()
+
 		connection.Connected = false
 		connection._prev = nil
 		connection._signal = nil
-
-		connection = connection._next
 	end
 	self._head = nil
 end
@@ -242,6 +240,10 @@ function Signal:Destroy()
 	end
 
 	self._active = false
+	
+	if not next(self._disconnections) then
+		self._disconnections = nil
+	end
 	self:DisconnectAll()
 end
 
