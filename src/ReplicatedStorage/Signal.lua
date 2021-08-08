@@ -240,10 +240,6 @@ function Signal:Destroy()
 	end
 
 	self._active = false
-	
-	if not next(self._disconnections) then
-		self._disconnections = nil
-	end
 	self:DisconnectAll()
 end
 
