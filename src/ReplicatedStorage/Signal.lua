@@ -230,6 +230,8 @@ function Signal:DisconnectAll()
 		connection.Connected = false
 		connection._prev = nil
 		connection._signal = nil
+
+		connection = connection._next
 	end
 	self._head = nil
 end
