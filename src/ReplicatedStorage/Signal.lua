@@ -1,9 +1,9 @@
 --[[
-	Signal:
+	Library:
 
 		Functions:
 
-			Signal.new()
+			.new()
 				Returns: Signal
 				
 				Description:
@@ -12,46 +12,40 @@
 	Signal:
 
 		Functions:
-			ScriptSignal:IsActive()
+
+			:IsActive()
 				Returns: boolean
-				Parameters: nil
 				Description:
 					\\ Returns whether a ScriptSignal is active or not.
 
-			ScriptSignal:Fire(...)
-				Returns: nil
+			:Fire(...)
 				Parameters: any
 				Description:
 					\\ Fires a ScriptSignal with any arguments.
 
-			ScriptSignal:Connect()
-				Returns: RBXScriptConnection
+			:Connect()
+				Returns: Connection
 				Parameters: function
 				Description:
 					\\ Connects a function to a ScriptSignal.
 
-			ScriptSignal:ConnectParallel()
-				Returns: RBXScriptConnection
-				Parameters: function
-				Description:
-					\\ Connects a function to a ScriptSignal. (multi-threading)
-
-			ScriptSignal:Wait()
+			:Wait()
 				Returns: any
-				Parameters: nil
 				Description:
 					\\ Yields until the Signal it belongs to is fired.
 					\\ Will return the arguments it was fired with.
 
-			ScriptSignal:Destroy()
-				Returns: nil
-				Parameters: nil
+			:Destroy()
 				Description:
 					\\ Destroys a ScriptSignal, all connections are then disconnected.
+			
+			:DisconnectAll()
+				Description:
+					\\ Disconnects all connections without destroying the Signal.
 
 		Connection:
 
-			Parameters:
+			Properties:
 
 				Connection.Connected
 							
@@ -130,7 +124,7 @@ function Signal:Connect(func)
 	}, Connection)
 
 	local _head = self._head
-	if _head then
+	if _head ~= nil then
 		_head._prev = connection
 		connection._next = _head
 	end
@@ -170,11 +164,11 @@ function Connection:Disconnect()
 	local _next = self._next
 	local _prev = self._prev
 
-	if _next then
+	if _next ~= nil then
 		_next._prev = _prev
 	end
 
-	if _prev then
+	if _prev ~= nil then
 		_prev._next = _next
 	else
 		--\\ This connection was the _head,
@@ -192,7 +186,6 @@ end
 function Signal:Wait()
 	if not self:IsActive() then
 		warn("Tried to :Wait on destroyed signal")
-
 		return
 	end
 	
@@ -241,7 +234,7 @@ function Signal:DisconnectAll()
 end
 
 function Signal:Destroy()
-	if not self.Active then
+	if not self:IsActive() then
 		return
 	end
 
