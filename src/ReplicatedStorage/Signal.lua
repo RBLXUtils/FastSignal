@@ -118,7 +118,7 @@ function Signal:Connect(func)
 	local connection = setmetatable({
 		Connected = true,
 		_func = func,
-		_signal = self,
+		_signal = self
 		_next = nil,
 		_prev = nil
 	}, Connection)
@@ -126,6 +126,7 @@ function Signal:Connect(func)
 	local _head = self._head
 	if _head ~= nil then
 		_head._prev = connection
+		_head._signal = nil
 		connection._next = _head
 	end
 
@@ -172,8 +173,10 @@ function Connection:Disconnect()
 		_prev._next = _next
 	else
 		--\\ This connection was the _head,
-		--   therefore we need to update it.
+		--   therefore we need to update the head
+		--   to the connection after this.
 
+		_next._signal = _signal
 		_signal._head = _next
 	end
 	
