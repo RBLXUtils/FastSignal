@@ -78,11 +78,6 @@
 			
 ]]
 
-local c_running = coroutine.running
-local c_yield = coroutine.yield
-local t_defer = task.defer
-local t_desynchronize = task.desynchronize
-
 local ERROR_ON_ALREADY_DISCONNECTED = false
 
 local Signal = {}
@@ -91,45 +86,25 @@ Signal.__index = Signal
 local Connection = {}
 Connection.__index = Connection
 
+function Signal:__call(_, ...)
+	if not self:IsActive() then
+		return
+	end
+
+	return self:Connect(...)
+end
+
 function Signal.new()
 	local self = setmetatable({
-		[1] = nil, -- _head
-		[2] = true -- _active
+		_active = true,
+		_head = nil
 	}, Signal)
 
 	return self
 end
 
 function Signal:IsActive()
-	return self[2] == true
-end
-
-local function Connect(self, func, self_disconnects)
-	if not self:IsActive() then
-		return setmetatable({
-			Connected = false
-		}, Connection)
-	end
-
-	local _head = self[1]
-
-	local connection = setmetatable({
-		Connected = true,
-		[1] = func, -- _func
-		[2] = self, -- _signal
-		[3] = _head, -- _next
-		[4] = nil, -- _prev
-		[5] = self_disconnects -- _self_disconnects
-	}, Connection)
-
-	if _head ~= nil then
-		_head[4] = connection -- _head._prev = connection
-		connection[3] = _head -- connection._next = _head
-	end
-
-	self[1] = connection -- _head = connection
-
-	return connection
+	return self._active == true
 end
 
 function Signal:Connect(func)
@@ -138,7 +113,29 @@ function Signal:Connect(func)
 		":Connect must be called with a function"
 	)
 
-	return Connect(self, func)
+	if not self:IsActive() then
+		return setmetatable({
+			Connected = false
+		}, Connection)
+	end
+
+	local connection = setmetatable({
+		Connected = true,
+		_func = func,
+		_signal = self,
+		_next = nil,
+		_prev = nil
+	}, Connection)
+
+	local _head = self._head
+	if _head ~= nil then
+		_head._prev = connection
+		connection._next = _head
+	end
+
+	self._head = connection
+
+	return connection
 end
 
 function Signal:ConnectParallel(func)
@@ -147,8 +144,8 @@ function Signal:ConnectParallel(func)
 		":ConnectParallel must be called with a function"
 	)
 
-	return Connect(self, function(...)
-		t_desynchronize()
+	return self:Connect(function(...)
+		task.desynchronize()
 		func(...)
 	end)
 end
@@ -164,37 +161,48 @@ function Connection:Disconnect()
 
 	self.Connected = false
 
-	local _next = self[3]
-	local _prev = self[4]
+	local _next = self._next
+	local _prev = self._prev
 
 	if _next ~= nil then
-		_next[4] = _prev -- _next._prev = _prev
+		_next._prev = _prev
 	end
 
 	if _prev ~= nil then
-		_prev[3] = _next -- _prev._next = _next
+		_prev._next = _next
 	else
 		--\\ This connection was the _head,
 		--   therefore we need to update the head
 		--   to the connection after this one.
 
-		self[2][1] = _next -- self._signal._head = _next
+		self._signal._head = _next
 	end
 	
 	--\\ Safe to wipe references to:
 
-	self[2] = nil
-	self[4] = nil
+	self._signal = nil
+	self._prev = nil
 end
 
 function Signal:Wait()
-	Connect(
-		self,
-		c_running(),
-		true
-	)
+	if not self:IsActive() then
+		warn("Tried to :Wait on destroyed signal")
+		return
+	end
+	
+	local thread = coroutine.running()
 
-	return c_yield()
+	local connection
+	connection = self:Connect(function(...)
+		connection:Disconnect()
+
+		task.spawn(
+			thread,
+			...
+		)
+	end)
+
+	return coroutine.yield()
 end
 
 function Signal:Fire(...)
@@ -203,32 +211,29 @@ function Signal:Fire(...)
 		return
 	end
 
-	local connection = self[1]
+	local connection = self._head
 	while connection ~= nil do
-		t_defer(
-			connection[1],
+		task.defer(
+			connection._func,
 			...
 		)
-		
-		if connection[5] then
-			-- If connection is one-fire only:
-			connection:Disconnect()
-		end
 
-		connection = connection[3] --> _next
+		connection = connection._next
 	end
 end
 
 function Signal:DisconnectAll()
-	local connection = self[1] -- _head
+	local connection = self._head
 	while connection ~= nil do
-		connection.Connected = false
-		connection[2] = nil -- _signal = nil
-		connection[4] = nil -- _prev = nil
+		--connection:Disconnect()
 
-		connection = connection[3] --> _next
+		connection.Connected = false
+		connection._prev = nil
+		connection._signal = nil
+
+		connection = connection._next
 	end
-	self[1] = nil -- _head = nil
+	self._head = nil
 end
 
 function Signal:Destroy()
@@ -236,21 +241,8 @@ function Signal:Destroy()
 		return
 	end
 
-	self[2] = false
+	self._active = false
 	self:DisconnectAll()
-end
-
-function Signal:__call(_, func)
-	if not self:IsActive() then
-		return
-	end
-
-	assert(
-		typeof(func) == 'function',
-		":Connect must be called with a function"
-	)
-
-	return Connect(self, func)
 end
 
 return Signal
