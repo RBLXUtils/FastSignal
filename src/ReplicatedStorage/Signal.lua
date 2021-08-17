@@ -101,7 +101,7 @@ local function CleanDisconnections(self)
 		return
 	end
 	self._disconnections = nil
-	self._is_firing = false
+	self._firing -= 1
 
 	for _, connection in ipairs(_disconnections) do
 		connection._next = nil
@@ -113,7 +113,7 @@ function Signal.new()
 	local self = setmetatable({
 		_active = true,
 		_head = nil,
-		_is_firing = false,
+		_firing = 0,
 		_disconnections = nil
 	}, Signal)
 
@@ -208,7 +208,7 @@ function Connection:Disconnect()
 	self._prev = nil
 
 	local _disconnections = _signal._disconnections
-	if _signal._is_firing then
+	if _signal._firing ~= 0 then
 		if _disconnections == nil then
 			_disconnections = {}
 			_signal._disconnections = _disconnections
@@ -239,7 +239,7 @@ function Signal:Fire(...)
 		warn("Tried to :Fire destroyed signal")
 		return
 	end
-	self._is_firing = true
+	self._firing += 1
 
 	local connection = self._head
 	while connection ~= nil do
