@@ -78,6 +78,7 @@
 			
 ]]
 
+local t_insert = table.insert
 local c_running = coroutine.running
 local c_yield = coroutine.yield
 local t_defer = task.defer
@@ -91,10 +92,29 @@ Signal.__index = Signal
 local Connection = {}
 Connection.__index = Connection
 
+local function CleanDisconnections(self)
+	--\\ Fired whenever all connections from a signal are fired,
+	--   handles empty-ing connections.
+
+	local _disconnections = self._disconnections
+	if _disconnections == nil then
+		return
+	end
+	self._disconnections = nil
+	self._is_firing = false
+
+	for _, connection in ipairs(_disconnections) do
+		connection._next = nil
+		connection._func = nil
+	end
+end
+
 function Signal.new()
 	local self = setmetatable({
 		_active = true,
-		_head = nil
+		_head = nil,
+		_is_firing = false,
+		_disconnections = nil
 	}, Signal)
 
 	return self
@@ -164,6 +184,7 @@ function Connection:Disconnect()
 
 	self.Connected = false
 
+	local _signal = self._signal
 	local _next = self._next
 	local _prev = self._prev
 
@@ -178,13 +199,28 @@ function Connection:Disconnect()
 		--   therefore we need to update the head
 		--   to the connection after this one.
 
-		self._signal._head = _next
+		_signal._head = _next
 	end
 	
-	--\\ Safe to wipe references to:
+	--\\ Safe to always wipe references to:
 
 	self._signal = nil
 	self._prev = nil
+
+	local _disconnections = _signal._disconnections
+	if _signal._is_firing then
+		if _disconnections == nil then
+			_disconnections = {}
+			_signal._disconnections = _disconnections
+		end
+		t_insert(_disconnections, self)
+		return
+		--\\ Schedule to be fully cleaned up later.
+
+	else
+		self._func = nil
+		self._next = nil
+	end
 end
 
 function Signal:Wait()
@@ -197,11 +233,13 @@ function Signal:Wait()
 	return c_yield()
 end
 
+
 function Signal:Fire(...)
 	if not self:IsActive() then
 		warn("Tried to :Fire destroyed signal")
 		return
 	end
+	self._is_firing = true
 
 	local connection = self._head
 	while connection ~= nil do
@@ -216,16 +254,17 @@ function Signal:Fire(...)
 
 		connection = connection._next
 	end
+
+	t_defer(
+		CleanDisconnections,
+		self
+	)
 end
 
 function Signal:DisconnectAll()
 	local connection = self._head
 	while connection ~= nil do
-		connection.Connected = false
-		connection._signal = nil
-		connection._prev = nil
-
-		connection = connection._next
+		connection:Disconnect()
 	end
 	self._head = nil
 end
