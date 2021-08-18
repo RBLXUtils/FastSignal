@@ -43,6 +43,16 @@
 				Description:
 					\\ Disconnects all connections without destroying the Signal.
 
+			:SetName()
+				Parameters: string
+				Description:
+					\\ Sets the name of a Signal
+
+			:GetName()
+				Returns: string
+				Description:
+					\\ Returns the Signal's current name
+
 	Connection:
 
 		Properties:
@@ -85,6 +95,7 @@ local t_defer = task.defer
 local t_desynchronize = task.desynchronize
 
 local ERROR_ON_ALREADY_DISCONNECTED = false
+local TOSTRING_ENABLED = true
 
 local Signal = {}
 Signal.__index = Signal
@@ -109,8 +120,10 @@ local function CleanDisconnections(self)
 	end
 end
 
-function Signal.new()
+
+function Signal.new(name)
 	local self = setmetatable({
+		_name = typeof(name) == 'string' and name or "",
 		_active = true,
 		_head = nil,
 		_firing = 0,
@@ -155,7 +168,7 @@ end
 function Signal:Connect(func)
 	assert(
 		typeof(func) == 'function',
-		":Connect must be called with a function"
+		":Connect must be called with a function ".. self._name
 	)
 
 	return Connect(self, func)
@@ -164,7 +177,7 @@ end
 function Signal:ConnectParallel(func)
 	assert(
 		typeof(func) == 'function',
-		":ConnectParallel must be called with a function"
+		":ConnectParallel must be called with a function ".. self._name
 	)
 
 	return Connect(self, function(...)
@@ -236,7 +249,7 @@ end
 
 function Signal:Fire(...)
 	if not self:IsActive() then
-		warn("Tried to :Fire destroyed signal")
+		warn("Tried to :Fire destroyed signal ".. self._name)
 		return
 	end
 	self._firing += 1
@@ -278,6 +291,26 @@ function Signal:Destroy()
 	self:DisconnectAll()
 end
 
+function Signal:GetName()
+	return self._name
+end
+
+function Signal:SetName(name)
+	assert(
+		typeof(name) == 'string',
+		"Name must be a string!"
+	)
+
+	self._name = name
+end
+
+function Signal:__tostring()
+	return "Signal ".. self._name
+end
+if not TOSTRING_ENABLED then
+	Signal.__tostring = nil
+end
+
 function Signal:__call(_, func)
 	if not self:IsActive() then
 		return
@@ -285,7 +318,7 @@ function Signal:__call(_, func)
 
 	assert(
 		typeof(func) == 'function',
-		":Connect must be called with a function"
+		":Connect must be called with a function ".. self._name
 	)
 
 	return Connect(self, func)
