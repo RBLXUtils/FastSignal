@@ -111,6 +111,7 @@ local function CleanDisconnections(self)
 	if _disconnections == nil then
 		return
 	end
+	
 	self._disconnections = nil
 	self._firing -= 1
 
@@ -119,7 +120,6 @@ local function CleanDisconnections(self)
 		connection._func = nil
 	end
 end
-
 
 function Signal.new(name)
 	local self = setmetatable({
@@ -157,7 +157,6 @@ local function Connect(self, func, is_wait)
 
 	if _head ~= nil then
 		_head._prev = connection
-		connection._next = _head
 	end
 
 	self._head = connection
@@ -276,8 +275,11 @@ end
 
 function Signal:DisconnectAll()
 	local connection = self._head
+	local nextConnection = connection._next
 	while connection ~= nil do
+		nextConnection = connection._next
 		connection:Disconnect()
+		connection = nextConnection
 	end
 	self._head = nil
 end
