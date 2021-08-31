@@ -88,40 +88,6 @@
 			
 ]]
 
---[[
-	License:
-
-	-----------------------------------------------------------------------------
-	MIT License
-
-	Copyright (c) 2021 LucasMZ
-
-	Permission is hereby granted, free of charge, to any person obtaining a copy
-	of this software and associated documentation files (the "Software"), to deal
-	in the Software without restriction, including without limitation the rights
-	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-	copies of the Software, and to permit persons to whom the Software is
-	furnished to do so, subject to the following conditions:
-
-	The above copyright notice and this permission notice shall be included in all
-	copies or substantial portions of the Software.
-
-	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-	SOFTWARE.
-	-----------------------------------------------------------------------------
-]]
-
-local t_insert = table.insert
-local c_running = coroutine.running
-local c_yield = coroutine.yield
-local t_defer = task.defer
-local t_desynchronize = task.desynchronize
-
 local ERROR_ON_ALREADY_DISCONNECTED = false
 local TOSTRING_ENABLED = true
 
@@ -131,31 +97,11 @@ Signal.__index = Signal
 local Connection = {}
 Connection.__index = Connection
 
-local function CleanDisconnections(self)
-	--\\ Fired whenever all connections from a signal are fired,
-	--   handles empty-ing connections.
-
-	local _disconnections = self._disconnections
-	if _disconnections == nil then
-		return
-	end
-	
-	self._disconnections = nil
-	self._firing -= 1
-
-	for _, connection in ipairs(_disconnections) do
-		connection._next = nil
-		connection._func = nil
-	end
-end
-
 function Signal.new(name)
 	local self = setmetatable({
 		_name = typeof(name) == 'string' and name or "",
 		_active = true,
-		_head = nil,
-		_firing = 0,
-		_disconnections = nil
+		_head = nil
 	}, Signal)
 
 	return self
@@ -208,7 +154,7 @@ function Signal:ConnectParallel(func)
 	)
 
 	return Connect(self, function(...)
-		t_desynchronize()
+		task.desynchronize()
 		func(...)
 	end)
 end
@@ -242,77 +188,58 @@ function Connection:Disconnect()
 		_signal._head = _next
 	end
 	
-	--\\ Safe to always wipe references to:
 
+	self._func = nil
 	self._signal = nil
+	self._next = nil
 	self._prev = nil
-
-	local _disconnections = _signal._disconnections
-	if _signal._firing ~= 0 then
-		if _disconnections == nil then
-			_disconnections = {}
-			_signal._disconnections = _disconnections
-		end
-		t_insert(_disconnections, self)
-		return
-		--\\ Schedule to be fully cleaned up later.
-
-	else
-		self._func = nil
-		self._next = nil
-	end
 end
 
 function Signal:Wait()
 	Connect(
 		self,
-		c_running(),
+		coroutine.running(),
 		true
 	)
 
-	return c_yield()
+	return coroutine.yield()
 end
-
 
 function Signal:Fire(...)
 	if not self:IsActive() then
 		warn("Tried to :Fire destroyed signal ".. self._name)
 		return
 	end
-	self._firing += 1
 
 	local connection = self._head
 	while connection ~= nil do
-		t_defer(
+		task.defer(
 			connection._func,
 			...
 		)
 		
 		if connection._is_wait then
+			local nextConnection = connection._next
+
 			connection:Disconnect()
+
+			connection = nextConnection
+			continue
 		end
 
 		connection = connection._next
 	end
-
-	t_defer(
-		CleanDisconnections,
-		self
-	)
 end
 
 function Signal:DisconnectAll()
-	self._firing += 1 --\\ Tag it as firing, we need _next in this case.
-
 	local connection = self._head
 	while connection ~= nil do
+		local nextConnection = connection._next
+
 		connection:Disconnect()
 
-		connection = connection._next
+		connection = nextConnection
 	end
-	self._head = nil
-
-	t_defer(CleanDisconnections, self)
 end
 
 function Signal:Destroy()
@@ -340,11 +267,16 @@ end
 function Signal:__tostring()
 	return "Signal ".. self._name
 end
+
 if not TOSTRING_ENABLED then
 	Signal.__tostring = nil
 end
 
 function Signal:__call(_, func)
+	if not self:IsActive() then
+		return
+	end
+
 	assert(
 		typeof(func) == 'function',
 		":Connect must be called with a function ".. self._name
