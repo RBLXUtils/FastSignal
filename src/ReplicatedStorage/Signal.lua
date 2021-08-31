@@ -88,6 +88,19 @@
 			
 ]]
 
+
+local function assert(condition, errorMessage)
+	-- Assert function which errors on top of the
+	-- function on which assert was called on.
+	-- Assert usually errors on the function it was called, not on the top one.
+
+	if not condition then
+		return
+	end
+
+	error(errorMessage, 3)
+end
+
 local ERROR_ON_ALREADY_DISCONNECTED = false
 local TOSTRING_ENABLED = true
 
