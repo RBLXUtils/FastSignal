@@ -89,7 +89,7 @@
 ]]
 
 
-local function assert(condition, errorMessage)
+local function assert(condition: any, errorMessage: string)
 	-- Assert function which errors on top of the
 	-- function on which assert was called on.
 	-- Assert usually errors on the function it was called, not on the top one.
@@ -101,8 +101,8 @@ local function assert(condition, errorMessage)
 	error(errorMessage, 3)
 end
 
-local ERROR_ON_ALREADY_DISCONNECTED = false
-local TOSTRING_ENABLED = true
+local ErrorsOnAlreadyConnected = false
+local IsToStringEnabled = true
 
 type Connection = {
 	Connected: boolean,
@@ -144,8 +144,8 @@ function Signal:IsActive(): boolean
 	return self._active == true
 end
 
-local function Connect(self, func, is_wait)
-	if not self:IsActive() then
+local function Connect(self, func, is_wait): Connection
+	if self._active == false then
 		return setmetatable({
 			Connected = false
 		}, Connection)
@@ -193,8 +193,8 @@ function Signal:ConnectParallel(func): Connection
 end
 
 function Connection:Disconnect()
-	if not self.Connected then
-		if ERROR_ON_ALREADY_DISCONNECTED then
+	if self.Connected == false then
+		if ErrorsOnAlreadyConnected then
 			error("Can't disconnect twice", 2)
 		end
 
@@ -239,12 +239,12 @@ function Signal:Wait(): any
 end
 
 function Signal:Fire(...)
-	if not self:IsActive() then
+	if self._active == false then
 		warn("Tried to :Fire destroyed signal -".. self._name)
 		return
 	end
 
-	local connection = self._head
+	local connection: Connection? = self._head
 	while connection ~= nil do
 		task.defer(
 			connection._func,
@@ -252,7 +252,7 @@ function Signal:Fire(...)
 		)
 		
 		if connection._is_wait then
-			local nextConnection = connection._next
+			local nextConnection: Connection? = connection._next
 
 			connection:Disconnect()
 
@@ -265,9 +265,9 @@ function Signal:Fire(...)
 end
 
 function Signal:DisconnectAll()
-	local connection = self._head
+	local connection: Connection? = self._head
 	while connection ~= nil do
-		local nextConnection = connection._next
+		local nextConnection: Connection? = connection._next
 
 		connection:Disconnect()
 
@@ -276,7 +276,7 @@ function Signal:DisconnectAll()
 end
 
 function Signal:Destroy()
-	if not self:IsActive() then
+	if self._active == false then
 		return
 	end
 
@@ -301,19 +301,21 @@ function Signal:__tostring()
 	return "Signal ".. self._name
 end
 
-if not TOSTRING_ENABLED then
+if IsToStringEnabled == false then
 	Signal.__tostring = nil
 end
 
-function Signal:__call(_, func)
-	if not self:IsActive() then
-		return
-	end
-
+function Signal:__call(_, func): Connection
 	assert(
 		typeof(func) == 'function',
 		":Connect must be called with a function -".. self._name
 	)
+
+	if self._active == false then
+		return setmetatable({
+			Connected = false
+		}, Connection)
+	end
 
 	return Connect(self, func)
 end
