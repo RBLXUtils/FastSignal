@@ -104,13 +104,33 @@ end
 local ERROR_ON_ALREADY_DISCONNECTED = false
 local TOSTRING_ENABLED = true
 
-local Signal = {}
+type Connection = {
+	Connected: boolean,
+	Disconnect: () -> (),
+}
+
+type Signal = {
+	Fire: (any) -> (),
+
+	Connect: ( () -> () ) -> Connection,
+	ConnectParralel: ( () -> () ) -> Connection,
+	Wait: () -> any,
+	
+	IsActive: () -> boolean,
+	DisconnectAll: () -> (),
+	Destroy: () -> (),
+
+	GetName: () -> (string),
+	SetName: (string) -> (),
+}
+
+local Signal  = {}
 Signal.__index = Signal
 
 local Connection = {}
 Connection.__index = Connection
 
-function Signal.new(name)
+function Signal.new(name: string?): Signal
 	local self = setmetatable({
 		_name = typeof(name) == 'string' and name or "",
 		_active = true,
@@ -120,7 +140,7 @@ function Signal.new(name)
 	return self
 end
 
-function Signal:IsActive()
+function Signal:IsActive(): boolean
 	return self._active == true
 end
 
@@ -151,7 +171,7 @@ local function Connect(self, func, is_wait)
 	return connection
 end
 
-function Signal:Connect(func)
+function Signal:Connect(func): Connection
 	assert(
 		typeof(func) == 'function',
 		":Connect must be called with a function ".. self._name
@@ -160,7 +180,7 @@ function Signal:Connect(func)
 	return Connect(self, func)
 end
 
-function Signal:ConnectParallel(func)
+function Signal:ConnectParallel(func): Connection
 	assert(
 		typeof(func) == 'function',
 		":ConnectParallel must be called with a function ".. self._name
@@ -208,7 +228,7 @@ function Connection:Disconnect()
 	self._prev = nil
 end
 
-function Signal:Wait()
+function Signal:Wait(): any
 	Connect(
 		self,
 		coroutine.running(),
@@ -264,11 +284,11 @@ function Signal:Destroy()
 	self:DisconnectAll()
 end
 
-function Signal:GetName()
+function Signal:GetName(): string
 	return self._name
 end
 
-function Signal:SetName(name)
+function Signal:SetName(name: string)
 	assert(
 		typeof(name) == 'string',
 		"Name must be a string!"
