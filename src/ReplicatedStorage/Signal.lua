@@ -5,7 +5,7 @@
 
 			.new()
 				Returns: Signal
-				
+
 				Description:
 					\\ Creates a new Signal object.
 
@@ -38,7 +38,7 @@
 			:Destroy()
 				Description:
 					\\ Destroys a ScriptSignal, all connections are then disconnected.
-			
+
 			:DisconnectAll()
 				Description:
 					\\ Disconnects all connections without destroying the Signal.
@@ -58,7 +58,7 @@
 		Properties:
 
 			.Connected
-							
+
 		Functions:
 
 			:Disconnect()
@@ -85,7 +85,7 @@
 				end)
 
 			Note that you shouldn't call a Signal unless it's being used in this form.
-			
+
 ]]
 
 
@@ -115,7 +115,7 @@ type Signal = {
 	Connect: ( () -> () ) -> Connection,
 	ConnectParralel: ( () -> () ) -> Connection,
 	Wait: () -> any,
-	
+
 	IsActive: () -> boolean,
 	DisconnectAll: () -> (),
 	Destroy: () -> (),
@@ -153,7 +153,7 @@ local function Connect(self, func, is_wait): Connection
 
 	local _head = self._head
 
-	local connection = setmetatable({
+	local connection: Connection = setmetatable({
 		Connected = true,
 		_func = func,
 		_signal = self,
@@ -213,14 +213,9 @@ function Connection:Disconnect()
 
 	if _prev ~= nil then
 		_prev._next = _next
-	else
-		--\\ This connection was the _head,
-		--   therefore we need to update the head
-		--   to the connection after this one.
-
+	else -- Connection is _head
 		_signal._head = _next
 	end
-	
 
 	self._func = nil
 	self._signal = nil
@@ -250,7 +245,7 @@ function Signal:Fire(...)
 			connection._func,
 			...
 		)
-		
+
 		if connection._is_wait then
 			local nextConnection: Connection? = connection._next
 
