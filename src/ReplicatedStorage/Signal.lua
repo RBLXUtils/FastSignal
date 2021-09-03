@@ -130,7 +130,7 @@ Signal.__index = Signal
 local Connection = {}
 Connection.__index = Connection
 
-function Signal.new(name: string?): Signal
+function Signal.new(name): Signal
 	local self = setmetatable({
 		_name = typeof(name) == 'string' and name or "",
 		_active = true,
