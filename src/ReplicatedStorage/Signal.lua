@@ -174,7 +174,7 @@ end
 function Signal:Connect(func): Connection
 	assert(
 		typeof(func) == 'function',
-		":Connect must be called with a function ".. self._name
+		":Connect must be called with a function -".. self._name
 	)
 
 	return Connect(self, func)
@@ -183,7 +183,7 @@ end
 function Signal:ConnectParallel(func): Connection
 	assert(
 		typeof(func) == 'function',
-		":ConnectParallel must be called with a function ".. self._name
+		":ConnectParallel must be called with a function -".. self._name
 	)
 
 	return Connect(self, function(...)
@@ -240,7 +240,7 @@ end
 
 function Signal:Fire(...)
 	if not self:IsActive() then
-		warn("Tried to :Fire destroyed signal ".. self._name)
+		warn("Tried to :Fire destroyed signal -".. self._name)
 		return
 	end
 
@@ -312,7 +312,7 @@ function Signal:__call(_, func)
 
 	assert(
 		typeof(func) == 'function',
-		":Connect must be called with a function ".. self._name
+		":Connect must be called with a function -".. self._name
 	)
 
 	return Connect(self, func)
