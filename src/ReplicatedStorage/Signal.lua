@@ -120,7 +120,7 @@ type Signal = {
 	DisconnectAll: () -> (),
 	Destroy: () -> (),
 
-	GetName: () -> (string),
+	GetName: () -> string,
 	SetName: (string) -> (),
 }
 
