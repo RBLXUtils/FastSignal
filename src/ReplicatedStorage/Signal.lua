@@ -111,11 +111,14 @@ local Connection = {}
 Connection.__index = Connection
 
 function Signal.new(name)
-	local self = setmetatable({
-		_name = typeof(name) == 'string' and name or "",
-		_active = true,
-		_head = nil
-	}, Signal)
+	local self = setmetatable(
+		{
+			_name = typeof(name) == 'string' and name or "",
+			_active = true,
+			_head = nil
+		},
+		Signal
+	)
 
 	return self
 end
@@ -126,21 +129,27 @@ end
 
 local function Connect(self, func, is_wait)
 	if self._active == false then
-		return setmetatable({
-			Connected = false
-		}, Connection)
+		return setmetatable(
+			{
+				Connected = false
+			},
+			Connection
+		)
 	end
 
 	local _head = self._head
 
-	local connection = setmetatable({
-		Connected = true,
-		_func = func,
-		_signal = self,
-		_next = _head,
-		_prev = nil,
-		_is_wait = is_wait
-	}, Connection)
+	local connection = setmetatable(
+		{
+			Connected = true,
+			_func = func,
+			_signal = self,
+			_next = _head,
+			_prev = nil,
+			_is_wait = is_wait
+		},
+		Connection
+	)
 
 	if _head ~= nil then
 		_head._prev = connection
