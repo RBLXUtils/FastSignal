@@ -88,7 +88,6 @@
 
 ]]
 
-
 local function assert(condition: any, errorMessage: string)
 	-- Assert function which errors on top of the
 	-- function on which assert was called on.
@@ -104,21 +103,18 @@ end
 local ErrorsOnAlreadyConnected = false
 local IsToStringEnabled = true
 
-local Signal  = {}
+local Signal = {}
 Signal.__index = Signal
 
 local Connection = {}
 Connection.__index = Connection
 
 function Signal.new(name)
-	local self = setmetatable(
-		{
-			_name = typeof(name) == 'string' and name or "",
-			_active = true,
-			_head = nil
-		},
-		Signal
-	)
+	local self = setmetatable({
+		_name = typeof(name) == "string" and name or "",
+		_active = true,
+		_head = nil,
+	}, Signal)
 
 	return self
 end
@@ -129,27 +125,21 @@ end
 
 local function Connect(self, func, is_wait)
 	if self._active == false then
-		return setmetatable(
-			{
-				Connected = false
-			},
-			Connection
-		)
+		return setmetatable({
+			Connected = false,
+		}, Connection)
 	end
 
 	local _head = self._head
 
-	local connection = setmetatable(
-		{
-			Connected = true,
-			_func = func,
-			_signal = self,
-			_next = _head,
-			_prev = nil,
-			_is_wait = is_wait
-		},
-		Connection
-	)
+	local connection = setmetatable({
+		Connected = true,
+		_func = func,
+		_signal = self,
+		_next = _head,
+		_prev = nil,
+		_is_wait = is_wait,
+	}, Connection)
 
 	if _head ~= nil then
 		_head._prev = connection
@@ -162,8 +152,8 @@ end
 
 function Signal:Connect(func)
 	assert(
-		typeof(func) == 'function',
-		":Connect must be called with a function -".. self._name
+		typeof(func) == "function",
+		":Connect must be called with a function -" .. self._name
 	)
 
 	return Connect(self, func)
@@ -171,8 +161,8 @@ end
 
 function Signal:ConnectParallel(func)
 	assert(
-		typeof(func) == 'function',
-		":ConnectParallel must be called with a function -".. self._name
+		typeof(func) == "function",
+		":ConnectParallel must be called with a function -" .. self._name
 	)
 
 	return Connect(self, function(...)
@@ -213,27 +203,20 @@ function Connection:Disconnect()
 end
 
 function Signal:Wait()
-	Connect(
-		self,
-		coroutine.running(),
-		true
-	)
+	Connect(self, coroutine.running(), true)
 
 	return coroutine.yield()
 end
 
 function Signal:Fire(...)
 	if self._active == false then
-		warn("Tried to :Fire destroyed signal -".. self._name)
+		warn("Tried to :Fire destroyed signal -" .. self._name)
 		return
 	end
 
 	local connection = self._head
 	while connection ~= nil do
-		task.defer(
-			connection._func,
-			...
-		)
+		task.defer(connection._func, ...)
 
 		if connection._is_wait then
 			local nextConnection = connection._next
@@ -273,16 +256,13 @@ function Signal:GetName()
 end
 
 function Signal:SetName(name)
-	assert(
-		typeof(name) == 'string',
-		"Name must be a string!"
-	)
+	assert(typeof(name) == "string", "Name must be a string!")
 
 	self._name = name
 end
 
 function Signal:__tostring()
-	return "Signal ".. self._name
+	return "Signal " .. self._name
 end
 
 if IsToStringEnabled == false then
@@ -291,13 +271,13 @@ end
 
 function Signal:__call(_, func)
 	assert(
-		typeof(func) == 'function',
-		":Connect must be called with a function -".. self._name
+		typeof(func) == "function",
+		":Connect must be called with a function -" .. self._name
 	)
 
 	if self._active == false then
 		return setmetatable({
-			Connected = false
+			Connected = false,
 		}, Connection)
 	end
 
