@@ -100,7 +100,7 @@ local function assert(condition: any, errorMessage: string)
 	error(errorMessage, 3)
 end
 
-local ErrorsOnAlreadyConnected = false
+local ErrorsOnAlreadyDisconnected = false
 local IsToStringEnabled = true
 
 export type Connection = {
@@ -204,7 +204,7 @@ end
 
 function Connection:Disconnect()
 	if self.Connected == false then
-		if ErrorsOnAlreadyConnected then
+		if ErrorsOnAlreadyDisconnected then
 			error("Can't disconnect twice", 2)
 		end
 
