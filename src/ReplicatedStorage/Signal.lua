@@ -103,13 +103,44 @@ end
 local ErrorsOnAlreadyConnected = false
 local IsToStringEnabled = true
 
+export type Connection = {
+	--[string]: any,
+
+	Connected: boolean,
+	Disconnect: (self: Connection) -> ()
+}
+
+export type Event = {
+	--[string]: any,
+
+	IsActive: (self: Event) -> boolean,
+
+	Fire: (self: Event, ...any) -> (),
+
+	Connect: (
+		self: Event, (...any) -> ()
+	) -> Connection,
+
+	ConnectParallel: (
+		self: Event, (...any) -> ()
+	) -> Connection,
+
+	Wait: (self: Event) -> (...any),
+
+	DisconnectAll: (self: Event) -> (),
+	Destroy: (self: Event) -> (),
+
+	GetName: (self: Event) -> string,
+	SetName: (self: Event, string) -> ()
+}
+
 local Signal = {}
 Signal.__index = Signal
 
 local Connection = {}
 Connection.__index = Connection
 
-function Signal.new(name)
+function Signal.new(name: string?): Event
 	local self = setmetatable({
 		_name = typeof(name) == "string" and name or "",
 		_active = true,
@@ -150,7 +181,7 @@ local function Connect(self, func, is_wait)
 	return connection
 end
 
-function Signal:Connect(func)
+function Signal:Connect(func): Connection
 	assert(
 		typeof(func) == "function",
 		":Connect must be called with a function -" .. self._name
@@ -159,7 +190,7 @@ function Signal:Connect(func)
 	return Connect(self, func)
 end
 
-function Signal:ConnectParallel(func)
+function Signal:ConnectParallel(func): Connection
 	assert(
 		typeof(func) == "function",
 		":ConnectParallel must be called with a function -" .. self._name
@@ -202,7 +233,7 @@ function Connection:Disconnect()
 	self._prev = nil
 end
 
-function Signal:Wait()
+function Signal:Wait(): (...any)
 	Connect(self, coroutine.running(), true)
 
 	return coroutine.yield()
@@ -255,7 +286,7 @@ function Signal:GetName()
 	return self._name
 end
 
-function Signal:SetName(name)
+function Signal:SetName(name: string)
 	assert(typeof(name) == "string", "Name must be a string!")
 
 	self._name = name
@@ -269,7 +300,7 @@ if IsToStringEnabled == false then
 	Signal.__tostring = nil
 end
 
-function Signal:__call(_, func)
+function Signal:__call(_, func): Connection
 	assert(
 		typeof(func) == "function",
 		":Connect must be called with a function -" .. self._name
