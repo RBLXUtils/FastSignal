@@ -88,121 +88,74 @@
 
 ]]
 
-local function assert(condition: any, errorMessage: string)
-	-- Assert function which errors on top of the
-	-- function on which assert was called on.
-	-- Assert usually errors on the function it was called, not on the top one.
-
-	if condition then
-		return
-	end
-
-	error(errorMessage, 3)
-end
-
 local ErrorsOnAlreadyDisconnected = false
 local IsToStringEnabled = true
 
-export type Connection = {
-	--[string]: any,
+local ScriptSignal = {}
+ScriptSignal.__index = ScriptSignal
+ScriptSignal.ClassName = "ScriptSignal"
 
-	Connected: boolean,
-	Disconnect: (self: Connection) -> ()
-}
+local ScriptConnection = {}
+ScriptConnection.__index = ScriptConnection
 
-export type Event = {
-	--[string]: any,
-
-	IsActive: (self: Event) -> boolean,
-
-	Fire: (self: Event, ...any) -> (),
-
-	Connect: (
-		self: Event, (...any) -> ()
-	) -> Connection,
-
-	ConnectParallel: (
-		self: Event, (...any) -> ()
-	) -> Connection,
-
-	Wait: (self: Event) -> (...any),
-
-	DisconnectAll: (self: Event) -> (),
-	Destroy: (self: Event) -> (),
-
-	GetName: (self: Event) -> string,
-	SetName: (self: Event, string) -> ()
-}
-
-local Signal = {}
-Signal.__index = Signal
-
-local Connection = {}
-Connection.__index = Connection
-
-function Signal.new(name: string?): Event
-	local self = setmetatable({
-		_name = typeof(name) == "string" and name or "",
+function ScriptSignal.new(name: string?)
+	return setmetatable({
 		_active = true,
-		_head = nil,
-	}, Signal)
+		_name = typeof(name) == "string" and name or "",
 
-	return self
+		_head = nil
+	}, ScriptSignal)
 end
 
-function Signal:IsActive()
+function ScriptSignal:IsA(className: string): boolean
+	return self.ClassName == className
+end
+
+function ScriptSignal:IsActive(): boolean
 	return self._active == true
 end
 
-local function Connect(self, func, is_wait)
+function ScriptSignal:Connect(
+	handle: (...any) -> ()
+)
 	if self._active == false then
 		return setmetatable({
-			Connected = false,
-		}, Connection)
+			Connected = false
+		}, ScriptConnection)
 	end
+
+	assert(
+		typeof(handle) == 'function',
+		":Connect must be called with a function -" .. self._name
+	)
 
 	local _head = self._head
 
-	local connection = setmetatable({
-		Connected = true,
-		_func = func,
+	local node = {
 		_signal = self,
+		_connection = nil,
+
+		_handle = handle,
 		_next = _head,
-		_prev = nil,
-		_is_wait = is_wait,
-	}, Connection)
+		_prev = nil
+	}
 
 	if _head ~= nil then
-		_head._prev = connection
+		_head._prev = node
 	end
+	self._head = node
 
-	self._head = connection
+	local connection = setmetatable({
+		Connected = true,
+		_node = node
+	}, ScriptConnection)
+
+	node._connection = connection
 
 	return connection
 end
 
-function Signal:Connect(func): Connection
-	assert(
-		typeof(func) == "function",
-		":Connect must be called with a function -" .. self._name
-	)
-
-	return Connect(self, func)
-end
-
-function Signal:ConnectParallel(func): Connection
-	assert(
-		typeof(func) == "function",
-		":ConnectParallel must be called with a function -" .. self._name
-	)
-
-	return Connect(self, function(...)
-		task.desynchronize()
-		func(...)
-	end)
-end
-
-function Connection:Disconnect()
+function ScriptConnection:Disconnect()
 	if self.Connected == false then
 		if ErrorsOnAlreadyDisconnected then
 			error("Can't disconnect twice", 2)
@@ -213,67 +166,69 @@ function Connection:Disconnect()
 
 	self.Connected = false
 
-	local _signal = self._signal
-	local _next = self._next
-	local _prev = self._prev
+	local _node = self._node
+	local node_next = _node._next
+	local node_prev = _node._prev
 
-	if _next ~= nil then
-		_next._prev = _prev
+	if node_next ~= nil then
+		node_next._prev = node_prev
 	end
 
-	if _prev ~= nil then
-		_prev._next = _next
-	else -- Connection is _head
-		_signal._head = _next
+	if node_prev ~= nil then
+		 node_prev._next = node_next
+	else
+		-- _node == self._head
+
+		_node._signal._head = node_next
 	end
 
-	self._func = nil
-	self._signal = nil
-	self._next = nil
-	self._prev = nil
+	self._node = nil
 end
 
-function Signal:Wait(): (...any)
-	Connect(self, coroutine.running(), true)
+function ScriptSignal:Wait(): (...any)
+	local thread do
+		thread = coroutine.running()
+
+		local connection
+		connection = self:Connect(function(...)
+			if connection == nil then
+				return
+			end
+
+			connection:Disconnect()
+			connection = nil
+
+			task.spawn(thread, ...)
+		end)
+	end
 
 	return coroutine.yield()
 end
 
-function Signal:Fire(...)
+function ScriptSignal:Fire(...)
 	if self._active == false then
 		warn("Tried to :Fire destroyed signal -" .. self._name)
 		return
 	end
 
-	local connection = self._head
-	while connection ~= nil do
-		task.defer(connection._func, ...)
+	local node = self._head
+	while node ~= nil do
+		task.defer(node._handle, ...)
 
-		if connection._is_wait then
-			local nextConnection = connection._next
-
-			connection:Disconnect()
-
-			connection = nextConnection
-			continue
-		end
-
-		connection = connection._next
+		node = node._next
 	end
 end
 
-function Signal:DisconnectAll()
-	local connection = self._head
-	while connection ~= nil do
-		local nextConnection = connection._next
+function ScriptSignal:DisconnectAll()
+	local node = self._head
+	while node ~= nil do
+		node._connection:Disconnect()
 
-		connection:Disconnect()
-
-		connection = nextConnection
+		node = node._next
 	end
 end
 
-function Signal:Destroy()
+function ScriptSignal:Destroy()
 	if self._active == false then
 		return
 	end
@@ -282,37 +237,50 @@ function Signal:Destroy()
 	self:DisconnectAll()
 end
 
-function Signal:GetName()
+function ScriptSignal:GetName(): string
 	return self._name
 end
 
-function Signal:SetName(name: string)
-	assert(typeof(name) == "string", "Name must be a string!")
+function ScriptSignal:SetName(name: string)
+	assert(
+		typeof(name) == 'string',
+		"Name must be a string!"
+	)
 
 	self._name = name
 end
 
-function Signal:__tostring()
+function ScriptSignal:__tostring()
 	return "Signal " .. self._name
 end
 
 if IsToStringEnabled == false then
-	Signal.__tostring = nil
+	ScriptSignal.__tostring = nil
 end
 
-function Signal:__call(_, func): Connection
+function ScriptSignal:__call(
+	_, handle: (...any) -> ()
+)
 	assert(
-		typeof(func) == "function",
+		typeof(handle) == "function",
 		":Connect must be called with a function -" .. self._name
 	)
 
 	if self._active == false then
 		return setmetatable({
 			Connected = false,
-		}, Connection)
+		}, ScriptConnection)
 	end
 
-	return Connect(self, func)
+	return self:Connect(handle)
 end
 
-return Signal
+export type ScriptSignal = typeof(
+	setmetatable({}, ScriptSignal)
+)
+
+export type ScriptConnection = typeof(
+	setmetatable({Connected = true}, ScriptConnection)
+)
+
+return ScriptSignal
