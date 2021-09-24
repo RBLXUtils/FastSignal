@@ -155,6 +155,47 @@ function ScriptSignal:Connect(
 	return connection
 end
 
+function ScriptSignal:ConnectOnce(
+	handle: (...any) -> ()
+)
+	assert(
+		typeof(handle) == 'function',
+		":Connect must be called with a function -" .. self._name
+	)
+
+	local connection
+	connection = self:Connect(function(...)
+		if connection == nil then
+			return
+		end
+
+		connection:Disconnect()
+		connection = nil
+
+		handle(...)
+	end)
+end
+
+function ScriptSignal:Wait(): (...any)
+	local thread do
+		thread = coroutine.running()
+
+		local connection
+		connection = self:Connect(function(...)
+			if connection == nil then
+				return
+			end
+
+			connection:Disconnect()
+			connection = nil
+
+			task.spawn(thread, ...)
+		end)
+	end
+
+	return coroutine.yield()
+end
+
 function ScriptConnection:Disconnect()
 	if self.Connected == false then
 		if ErrorsOnAlreadyDisconnected then
@@ -185,25 +226,6 @@ function ScriptConnection:Disconnect()
 	self._node = nil
 end
 
-function ScriptSignal:Wait(): (...any)
-	local thread do
-		thread = coroutine.running()
-
-		local connection
-		connection = self:Connect(function(...)
-			if connection == nil then
-				return
-			end
-
-			connection:Disconnect()
-			connection = nil
-
-			task.spawn(thread, ...)
-		end)
-	end
-
-	return coroutine.yield()
-end
 
 function ScriptSignal:Fire(...)
 	if self._active == false then
