@@ -1,17 +1,12 @@
 --[[
-	Library:
+	ScriptSignal:
 
 		Functions:
 
 			.new()
-				Returns: Signal
-
+				Returns: ScriptSignal
 				Description:
-					\\ Creates a new Signal object.
-
-	Signal:
-
-		Functions:
+					\\ Creates a new ScriptSignal object.
 
 			:IsActive()
 				Returns: boolean
@@ -24,13 +19,19 @@
 					\\ Fires a ScriptSignal with any arguments.
 
 			:Connect()
-				Returns: Connection
-				Parameters: function
+				Returns: ScriptConnection
+				Parameters: function: (...any) -> ()
 				Description:
 					\\ Connects a function to a ScriptSignal.
 
+			:ConnectOnce()
+				Parameters: function: (...any) -> ()
+				Description:
+					\\ Runs the function given only on the first fire since
+					\\ the connection was connected
+
 			:Wait()
-				Returns: any
+				Returns: (...any)
 				Description:
 					\\ Yields until the Signal it belongs to is fired.
 					\\ Will return the arguments it was fired with.
@@ -53,38 +54,17 @@
 				Description:
 					\\ Returns the Signal's current name
 
-	Connection:
+	ScriptConnection:
 
 		Properties:
 
-			.Connected
+			.Connected: boolean
 
 		Functions:
 
 			:Disconnect()
 				Description:
 					\\ Disconnects a connection.
-
-		Extra:
-
-			This Signal Class can be used to make shortcuts to connector functions.
-			Example:
-
-				local Event = Signal.new()
-				local Class = {}
-				Class.ListenToChanged = Event
-
-				Class.ListenToChanged:Connect(function()
-					print("Fired!")
-					-- Valid (obviously)
-				end)
-
-				Class:ListenToChanged(function()
-					print("Fired!")
-					-- ^ Valid, can be used for things like these
-				end)
-
-			Note that you shouldn't call a Signal unless it's being used in this form.
 
 ]]
 
@@ -118,16 +98,16 @@ end
 function ScriptSignal:Connect(
 	handle: (...any) -> ()
 )
+	assert(
+		typeof(handle) == 'function',
+		":Connect must be called with a function -" .. self._name
+	)
+
 	if self._active == false then
 		return setmetatable({
 			Connected = false
 		}, ScriptConnection)
 	end
-
-	assert(
-		typeof(handle) == 'function',
-		":Connect must be called with a function -" .. self._name
-	)
 
 	local _head = self._head
 
