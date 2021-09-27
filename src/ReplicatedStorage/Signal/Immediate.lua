@@ -179,15 +179,17 @@ end
 function ScriptSignal:Fire(...)
 	local node = self._head
 	while node ~= nil do
-		if FreeThread == nil then
-			FreeThread = coroutine.create(RunHandlerInFreeThread)
-		end
+		if node._connection ~= nil then -- Is Connected
+			if FreeThread == nil then
+				FreeThread = coroutine.create(RunHandlerInFreeThread)
+			end
 
-		task.spawn(
-			FreeThread :: thread,
-			node._handle,
-			...
-		)
+			task.spawn(
+				FreeThread :: thread,
+				node._handle,
+				...
+			)
+		end
 
 		node = node._next
 	end
