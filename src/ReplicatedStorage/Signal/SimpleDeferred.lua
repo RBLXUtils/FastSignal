@@ -64,17 +64,20 @@ ScriptSignal.__index = ScriptSignal
 local ScriptConnection = {}
 ScriptConnection.__index = ScriptConnection
 
-function ScriptSignal.new()
+-- Creates a ScriptSignal object
+function ScriptSignal.new(): Class
 	return setmetatable({
 		_active = true,
 		_head = nil
 	}, ScriptSignal)
 end
 
+-- Returns a boolean determining if the ScriptSignal object is usable
 function ScriptSignal:IsActive(): boolean
 	return self._active == true
 end
 
+-- Connects a function to the ScriptSignal object
 function ScriptSignal:Connect(
 	handle: (...any) -> ()
 )
@@ -93,8 +96,8 @@ function ScriptSignal:Connect(
 
 	local node = {
 		_signal = self,
-		_handle = handle,
 		_connection = nil,
+		_handle = handle,
 
 		_next = _head,
 		_prev = nil
@@ -116,6 +119,8 @@ function ScriptSignal:Connect(
 	return connection
 end
 
+-- Connects a function to a ScriptSignal object, but only allows that
+-- connection to run once; any later fires won't trigger anything
 function ScriptSignal:ConnectOnce(
 	handle: (...any) -> ()
 )
@@ -137,6 +142,8 @@ function ScriptSignal:ConnectOnce(
 	end)
 end
 
+-- Yields the current thread until the signal is fired, returns what
+-- it was fired with
 function ScriptSignal:Wait(): (...any)
 	local thread do
 		thread = coroutine.running()
@@ -157,6 +164,7 @@ function ScriptSignal:Wait(): (...any)
 	return coroutine.yield()
 end
 
+-- Fires a ScriptSignal object with the arguments passed through it
 function ScriptSignal:Fire(...)
 	local node = self._head
 	while node ~= nil do
@@ -166,6 +174,8 @@ function ScriptSignal:Fire(...)
 	end
 end
 
+-- Disconnects all connections from a ScriptSignal object
+-- without destroying it and without making it unusable
 function ScriptSignal:DisconnectAll()
 	local node = self._head
 	while node ~= nil do
@@ -175,6 +185,8 @@ function ScriptSignal:DisconnectAll()
 	end
 end
 
+-- Destroys a ScriptSignal object, disconnecting all connections
+-- and making it unusable.
 function ScriptSignal:Destroy()
 	if self._active == false then
 		return
@@ -184,6 +196,8 @@ function ScriptSignal:Destroy()
 	self._active = false
 end
 
+-- Disconnects a connection, any :Fire calls from now on would not
+-- invoke this connection's function
 function ScriptConnection:Disconnect()
 	if self.Connected == false then
 		return
@@ -211,7 +225,7 @@ function ScriptConnection:Disconnect()
 	self._node = nil
 end
 
-export type ScriptSignal = typeof(
+export type Class = typeof(
 	setmetatable({}, ScriptSignal)
 )
 
