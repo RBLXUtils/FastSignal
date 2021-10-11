@@ -9,4 +9,4 @@
 ---
 
 
-*Fast*Signal is an efficient Signal library, being easy to use, pretty fast, and pretty similar *syntax and behaviour* wise as Roblox's ScriptSignals and ScriptConnections.
+*Fast*Signal is an efficient Signal library, being easy to use, pretty fast, and pretty similar *syntax and behaviour* wise as Roblox's ScriptSignals.
