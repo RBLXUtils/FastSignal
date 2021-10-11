@@ -214,7 +214,9 @@ function ScriptSignal:Fire(...)
 
 	local node = self._head
 	while node ~= nil do
-		task.defer(node._handle, ...)
+		if node._connection ~= nil then
+			task.defer(node._handle, ...)
+		end
 
 		node = node._next
 	end
