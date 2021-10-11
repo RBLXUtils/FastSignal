@@ -181,7 +181,10 @@ end
 function ScriptSignal:DisconnectAll()
 	local node = self._head
 	while node ~= nil do
-		node._connection:Disconnect()
+		local _connection = self._connection
+		if _connection ~= nil then
+			_connection:Disconnect()
+		end
 
 		node = node._next
 	end
