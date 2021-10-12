@@ -80,7 +80,8 @@ end
 -- Connects a function to the ScriptSignal object
 function ScriptSignal:Connect(
 	handle: (...any) -> ()
-)
+): ScriptConnection
+
 	assert(
 		typeof(handle) == 'function',
 		"Must be function"
@@ -229,6 +230,8 @@ function ScriptConnection:Disconnect()
 	_node._connection = nil
 	self._node = nil
 end
+
+ScriptConnection.Destroy = ScriptConnection.Disconnect
 
 export type Class = typeof(
 	setmetatable({}, ScriptSignal)
