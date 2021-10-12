@@ -90,7 +90,8 @@ end
 -- Connects a function to the ScriptSignal object
 function ScriptSignal:Connect(
 	handle: (...any) -> ()
-)
+): ScriptConnection
+
 	assert(
 		typeof(handle) == 'function',
 		":Connect must be called with a function -" .. self._name
@@ -204,6 +205,8 @@ function ScriptConnection:Disconnect()
 
 	self._node = nil
 end
+
+ScriptConnection.Destroy = ScriptConnection.Disconnect
 
 -- Fires a ScriptSignal object with the arguments passed through it
 function ScriptSignal:Fire(...)
