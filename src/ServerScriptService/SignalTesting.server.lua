@@ -22,9 +22,11 @@ local IsDeferred do
 	Event:Destroy()
 
 	warn(
-		"Is Signal Deferred: ".. IsDeferred
-			and "Yes"
-			or "No"
+		"Is Signal Deferred: ".. (
+			IsDeferred
+				and "Yes"
+				or "No"
+		)
 	)
 end
 
@@ -52,8 +54,10 @@ local IsReverseOrder do
 	Event:Destroy()
 
 	warn(
-		"Is Connect Order Reverse:".. IsReverseOrder
-			and "Yes"
-			or "No"
+		"Is Connect Order Reverse: ".. (
+			IsReverseOrder
+				and "Yes"
+				or "No"
+		)
 	)
 end
