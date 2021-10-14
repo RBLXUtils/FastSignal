@@ -61,31 +61,19 @@
 local IsDeferred: boolean do
 	IsDeferred = false
 
-	local thread = coroutine.running()
-
 	local bindable = Instance.new("BindableEvent")
+
+	local handlerRun = false
 	bindable.Event:Connect(function()
-		-- Last connection ran
-
-		task.defer(thread)
-	end)
-
-	local connection = bindable.Event:Connect(function()
-		-- Second connection ran
-
-		IsDeferred = true
-	end)
-
-	bindable.Event:Connect(function()
-		-- First connection ran
-
-		connection:Disconnect()
+		handlerRun = true
 	end)
 
 	bindable:Fire()
-
-	coroutine.yield()
 	bindable:Destroy()
+
+	if handlerRun == false then
+		IsDeferred = true
+	end
 end
 
 local ScriptSignal = {}
