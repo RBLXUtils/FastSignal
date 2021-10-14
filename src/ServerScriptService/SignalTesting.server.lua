@@ -1,20 +1,59 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Signal = require(ReplicatedStorage.Signal)
+local Signal = require(ReplicatedStorage.FastSignal.Adaptive)
 
-local Event = Signal.new("CoolEvent")
-print(Event)
+local IsDeferred do
+	IsDeferred = false
 
-Event:Connect(function(...)
-    print(Event, ...)
-end)
+	local Event = Signal.new()
 
-task.spawn(function()
-    print("Wait", Event:Wait())
-end)
+	task.defer(function()
+		local connection = Event:Connect(function()
+			IsDeferred = true
+		end)
 
-Event:Fire("what,", "... is going on?")
+		Event:Connect(function()
+			connection:Disconnect()
+		end)
 
-Event:Destroy()
-print(Event)
+		Event:Fire()
+	end)
 
-Event:Connect()
+	Event:Wait()
+	Event:Destroy()
+
+	warn(
+		"Is Signal Deferred: ".. IsDeferred
+			and "Yes"
+			or "No"
+	)
+end
+
+local IsReverseOrder do
+	IsReverseOrder = false
+
+	local Event = Signal.new()
+	local firstConnectionFired = false
+
+	task.defer(function()
+		Event:Connect(function()
+			firstConnectionFired = true
+		end)
+
+		Event:Connect(function()
+			if firstConnectionFired then
+				IsReverseOrder = true
+			end
+		end)
+
+		Event:Fire()
+	end)
+
+	Event:Wait()
+	Event:Destroy()
+
+	warn(
+		"Is Connect Order Reverse:".. IsReverseOrder
+			and "Yes"
+			or "No"
+	)
+end
