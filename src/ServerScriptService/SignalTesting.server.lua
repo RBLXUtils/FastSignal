@@ -29,7 +29,7 @@ local IsDeferred do
 end
 
 local IsReverseOrder do
-	IsReverseOrder = false
+	IsReverseOrder = true
 
 	local Event = Signal.new()
 	local firstConnectionFired = false
@@ -41,7 +41,7 @@ local IsReverseOrder do
 
 		Event:Connect(function()
 			if firstConnectionFired then
-				IsReverseOrder = true
+				IsReverseOrder = false
 			end
 		end)
 
