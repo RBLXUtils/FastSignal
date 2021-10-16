@@ -65,7 +65,7 @@ local ScriptConnection = {}
 ScriptConnection.__index = ScriptConnection
 
 -- Creates a ScriptSignal object
-function ScriptSignal.new(): Class
+function ScriptSignal.new()
 	return setmetatable({
 		_active = true,
 		_head = nil
@@ -80,8 +80,7 @@ end
 -- Connects a function to the ScriptSignal object
 function ScriptSignal:Connect(
 	handle: (...any) -> ()
-): ScriptConnection
-
+)
 	assert(
 		typeof(handle) == 'function',
 		"Must be function"
@@ -230,15 +229,14 @@ function ScriptConnection:Disconnect()
 	_node._connection = nil
 	self._node = nil
 end
-
 ScriptConnection.Destroy = ScriptConnection.Disconnect
 
 export type Class = typeof(
-	setmetatable({}, ScriptSignal)
+	ScriptSignal.new()
 )
 
 export type ScriptConnection = typeof(
-	setmetatable({Connected = true}, ScriptConnection)
+	ScriptSignal.new():Connect(function() end)
 )
 
 return ScriptSignal

@@ -73,7 +73,7 @@ local ScriptConnection = {}
 ScriptConnection.__index = ScriptConnection
 
 -- Creates a ScriptSignal object
-function ScriptSignal.new(name: string?): Class
+function ScriptSignal.new(name: string?)
 	return setmetatable({
 		_active = true,
 		_name = typeof(name) == "string" and name or "",
@@ -90,8 +90,7 @@ end
 -- Connects a function to the ScriptSignal object
 function ScriptSignal:Connect(
 	handle: (...any) -> ()
-): ScriptConnection
-
+)
 	assert(
 		typeof(handle) == 'function',
 		":Connect must be called with a function -" .. self._name
@@ -174,40 +173,6 @@ function ScriptSignal:Wait(): (...any)
 	return coroutine.yield()
 end
 
--- Disconnects a connection, any :Fire calls from now on would not
--- invoke this connection's function
-function ScriptConnection:Disconnect()
-	if self.Connected == false then
-		if ErrorsOnAlreadyDisconnected then
-			error("Can't disconnect twice", 2)
-		end
-
-		return
-	end
-
-	self.Connected = false
-
-	local _node = self._node
-	local node_next = _node._next
-	local node_prev = _node._prev
-
-	if node_next ~= nil then
-		node_next._prev = node_prev
-	end
-
-	if node_prev ~= nil then
-		 node_prev._next = node_next
-	else
-		-- _node == self._head
-
-		_node._signal._head = node_next
-	end
-
-	self._node = nil
-end
-
-ScriptConnection.Destroy = ScriptConnection.Disconnect
-
 -- Fires a ScriptSignal object with the arguments passed through it
 function ScriptSignal:Fire(...)
 	if self._active == false then
@@ -265,8 +230,41 @@ function ScriptSignal:SetName(name: string)
 	self._name = name
 end
 
+-- Disconnects a connection, any :Fire calls from now on would not
+-- invoke this connection's function
+function ScriptConnection:Disconnect()
+	if self.Connected == false then
+		if ErrorsOnAlreadyDisconnected then
+			error("Can't disconnect twice", 2)
+		end
+
+		return
+	end
+
+	self.Connected = false
+
+	local _node = self._node
+	local node_next = _node._next
+	local node_prev = _node._prev
+
+	if node_next ~= nil then
+		node_next._prev = node_prev
+	end
+
+	if node_prev ~= nil then
+		 node_prev._next = node_next
+	else
+		-- _node == self._head
+
+		_node._signal._head = node_next
+	end
+
+	self._node = nil
+end
+ScriptConnection.Destroy = ScriptConnection.Disconnect
+
 function ScriptSignal:__tostring()
-	return "Signal " .. self._name
+	return "Signal ".. self._name
 end
 
 if IsToStringEnabled == false then
@@ -277,27 +275,16 @@ end
 -- it will behave like a :Connect call
 function ScriptSignal:__call(
 	_, handle: (...any) -> ()
-): ScriptConnection
-	assert(
-		typeof(handle) == "function",
-		":Connect must be called with a function -" .. self._name
-	)
-
-	if self._active == false then
-		return setmetatable({
-			Connected = false
-		}, ScriptConnection)
-	end
-
+)
 	return self:Connect(handle)
 end
 
 export type Class = typeof(
-	setmetatable({}, ScriptSignal)
+	ScriptSignal.new()
 )
 
 export type ScriptConnection = typeof(
-	setmetatable({Connected = true}, ScriptConnection)
+	ScriptSignal.new():Connect(function() end)
 )
 
 return ScriptSignal
