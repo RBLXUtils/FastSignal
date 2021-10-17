@@ -4,7 +4,7 @@
     <img alt="" src="https://img.shields.io/github/downloads/LucasMZReal/FastSignal/total">
 </a>
 
-# *Fast*Signal
+# [*Fast*Signal](https://devforum.roblox.com/t/signal/1360042)
 
 *Fast*Signal is a Signal library made with consistency and expectable behaviour in mind, it is efficient, easy to use, and widely compatible.
 
