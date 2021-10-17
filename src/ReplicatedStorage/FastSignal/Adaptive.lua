@@ -89,7 +89,10 @@ if IsDeferred then
 else
 	local FreeThread: thread? = nil
 
-	local function RunHandler(handle, ...)
+	local function RunHandlerInFreeThread(
+		handle: (...any) -> (),
+		...
+	)
 		local thread = FreeThread :: thread
 		FreeThread = nil
 
@@ -98,17 +101,20 @@ else
 		FreeThread = thread
 	end
 
-	local function RunHandlerInFreeThread(...)
-		RunHandler(...)
+	local function CreateFreeThread()
+		FreeThread = coroutine.running()
 
 		while true do
-			RunHandler( coroutine.yield() )
+			RunHandlerInFreeThread( coroutine.yield() )
 		end
 	end
 
-	function RunListener(handle, ...)
+	function RunListener(
+		handle: (...any) -> (),
+		...
+	)
 		if FreeThread == nil then
-			FreeThread = coroutine.create(RunHandlerInFreeThread)
+			task.spawn(CreateFreeThread)
 		end
 
 		task.spawn(
