@@ -1,5 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Signal = require(ReplicatedStorage.FastSignal.Adaptive)
+local Signal = require(ReplicatedStorage.FastSignal)
 
 local IsDeferred do
 	IsDeferred = false

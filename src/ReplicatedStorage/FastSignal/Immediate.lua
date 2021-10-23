@@ -94,6 +94,12 @@ function ScriptSignal.new()
 	}, ScriptSignal)
 end
 
+-- Returns a boolean determining if the object is a ScriptSignal
+function ScriptSignal.Is(object): boolean
+	return typeof(object) == 'table'
+		and getmetatable(object) == ScriptSignal
+end
+
 -- Returns a boolean determining if the ScriptSignal object is usable
 function ScriptSignal:IsActive(): boolean
 	return self._active == true
@@ -132,7 +138,6 @@ function ScriptSignal:Connect(
 
 	local connection = setmetatable({
 		Connected = true,
-
 		_node = node
 	}, ScriptConnection)
 

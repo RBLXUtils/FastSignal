@@ -1,70 +1,62 @@
 --[[
 	ScriptSignal:
 
-		.new()
-			Returns: ScriptSignal
-			Description:
-				\\ Creates a new ScriptSignal object.
+		Functions:
 
-		:IsActive()
-			Returns: boolean
-			Description:
-				\\ Returns a boolean determining
-				\\ whether a ScriptSignal is active or not.
+			.new()
+				Returns: ScriptSignal
+				Description:
+					\\ Creates a new ScriptSignal object.
 
-		:Fire(...)
-			Parameters: ()...any)
-			Description:
-				\\ Fires a ScriptSignal with any arguments.
+			:IsActive()
+				Returns: boolean
+				Description:
+					\\ Returns whether a ScriptSignal is active or not.
 
-		:Connect()
-			Returns: ScriptConnection
-			Parameters: function: (...any) -> ()
-			Description:
-				\\ Connects a function to a ScriptSignal.
+			:Fire(...)
+				Parameters: any
+				Description:
+					\\ Fires a ScriptSignal with any arguments.
 
-		:ConnectOnce()
-			Parameters: function: (...any) -> ()
-			Description:
-				\\ Runs the function given only on the first fire since
-				\\ the connection was connected
+			:Connect()
+				Returns: ScriptConnection
+				Parameters: function: (...any) -> ()
+				Description:
+					\\ Connects a function to a ScriptSignal.
 
-		:Wait()
-			Returns: (...any)
-			Description:
-				\\ Yields until the Signal it belongs to is fired.
-				\\ Will return the arguments it was fired with.
+			:ConnectOnce()
+				Parameters: function: (...any) -> ()
+				Description:
+					\\ Runs the function given only on the first fire since
+					\\ the connection was connected
 
-		:Destroy()
-			Description:
-				\\ Destroys a ScriptSignal, all connections are then disconnected.
+			:Wait()
+				Returns: (...any)
+				Description:
+					\\ Yields until the Signal it belongs to is fired.
+					\\ Will return the arguments it was fired with.
 
-		:DisconnectAll()
-			Description:
-				\\ Disconnects all connections without destroying the Signal.
+			:Destroy()
+				Description:
+					\\ Destroys a ScriptSignal, all connections are then disconnected.
 
-		:SetName()
-			Parameters: string
-			Description:
-				\\ Sets the name of a Signal
-
-		:GetName()
-			Returns: string
-			Description:
-				\\ Returns the Signal's current name
+			:DisconnectAll()
+				Description:
+					\\ Disconnects all connections without destroying the Signal.
 
 	ScriptConnection:
 
-		Connected: boolean
+		Properties:
 
-		:Disconnect()
-			Description:
-				\\ Disconnects a connection.
+			.Connected: boolean
+
+		Functions:
+
+			:Disconnect()
+				Description:
+					\\ Disconnects a connection.
 
 ]]
-
-local ErrorsOnAlreadyDisconnected = false
-local IsToStringEnabled = true
 
 local ScriptSignal = {}
 ScriptSignal.__index = ScriptSignal
@@ -73,13 +65,17 @@ local ScriptConnection = {}
 ScriptConnection.__index = ScriptConnection
 
 -- Creates a ScriptSignal object
-function ScriptSignal.new(name: string?)
+function ScriptSignal.new()
 	return setmetatable({
 		_active = true,
-		_name = typeof(name) == "string" and name or "",
-
 		_head = nil
 	}, ScriptSignal)
+end
+
+-- Returns a boolean determining if the object is a ScriptSignal
+function ScriptSignal.Is(object): boolean
+	return typeof(object) == 'table'
+		and getmetatable(object) == ScriptSignal
 end
 
 -- Returns a boolean determining if the ScriptSignal object is usable
@@ -93,7 +89,7 @@ function ScriptSignal:Connect(
 )
 	assert(
 		typeof(handle) == 'function',
-		":Connect must be called with a function -" .. self._name
+		"Must be function"
 	)
 
 	if self._active == false then
@@ -113,7 +109,7 @@ function ScriptSignal:Connect(
 		_prev = nil
 	}
 
-	if _head ~= nil then
+	if _head then
 		_head._prev = node
 	end
 	self._head = node
@@ -135,7 +131,7 @@ function ScriptSignal:ConnectOnce(
 )
 	assert(
 		typeof(handle) == 'function',
-		":Connect must be called with a function -" .. self._name
+		"Must be function"
 	)
 
 	local connection
@@ -175,11 +171,6 @@ end
 
 -- Fires a ScriptSignal object with the arguments passed through it
 function ScriptSignal:Fire(...)
-	if self._active == false then
-		warn("Tried to :Fire destroyed signal -" .. self._name)
-		return
-	end
-
 	local node = self._head
 	while node ~= nil do
 		if node._connection ~= nil then
@@ -211,73 +202,39 @@ function ScriptSignal:Destroy()
 		return
 	end
 
-	self._active = false
 	self:DisconnectAll()
-end
-
--- Returns the name given to the ScriptSignal
-function ScriptSignal:GetName(): string
-	return self._name
-end
-
--- Sets the name of the ScriptSignal
-function ScriptSignal:SetName(name: string)
-	assert(
-		typeof(name) == 'string',
-		"Name must be a string!"
-	)
-
-	self._name = name
+	self._active = false
 end
 
 -- Disconnects a connection, any :Fire calls from now on would not
 -- invoke this connection's function
 function ScriptConnection:Disconnect()
 	if self.Connected == false then
-		if ErrorsOnAlreadyDisconnected then
-			error("Can't disconnect twice", 2)
-		end
-
 		return
 	end
 
 	self.Connected = false
 
 	local _node = self._node
-	local node_next = _node._next
-	local node_prev = _node._prev
+	local _prev = self._prev
+	local _next = self._next
 
-	if node_next ~= nil then
-		node_next._prev = node_prev
+	if _next then
+		_next._prev = _prev
 	end
 
-	if node_prev ~= nil then
-		 node_prev._next = node_next
+	if _prev then
+		_prev._next = _next
 	else
-		-- _node == self._head
+		-- _node == _signal._head
 
-		_node._signal._head = node_next
+		_node._signal._head = _next
 	end
 
+	_node._connection = nil
 	self._node = nil
 end
 ScriptConnection.Destroy = ScriptConnection.Disconnect
-
-function ScriptSignal:__tostring()
-	return "Signal ".. self._name
-end
-
-if IsToStringEnabled == false then
-	ScriptSignal.__tostring = nil
-end
-
--- If the signal is called from inside a table,
--- it will behave like a :Connect call
-function ScriptSignal:__call(
-	_, handle: (...any) -> ()
-)
-	return self:Connect(handle)
-end
 
 export type Class = typeof(
 	ScriptSignal.new()

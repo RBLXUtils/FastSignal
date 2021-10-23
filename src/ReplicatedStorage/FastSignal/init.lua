@@ -58,11 +58,71 @@
 
 ]]
 
+local IsDeferred: boolean do
+	IsDeferred = false
+
+	local bindable = Instance.new("BindableEvent")
+
+	local handlerRun = false
+	bindable.Event:Connect(function()
+		handlerRun = true
+	end)
+
+	bindable:Fire()
+	bindable:Destroy()
+
+	if handlerRun == false then
+		IsDeferred = true
+	end
+end
+
 local ScriptSignal = {}
 ScriptSignal.__index = ScriptSignal
 
 local ScriptConnection = {}
 ScriptConnection.__index = ScriptConnection
+
+local RunListener
+
+if IsDeferred then
+	RunListener = task.defer
+else
+	local FreeThread: thread? = nil
+
+	local function RunHandlerInFreeThread(
+		handle: (...any) -> (),
+		...
+	)
+		local thread = FreeThread :: thread
+		FreeThread = nil
+
+		handle(...)
+
+		FreeThread = thread
+	end
+
+	local function CreateFreeThread()
+		FreeThread = coroutine.running()
+
+		while true do
+			RunHandlerInFreeThread( coroutine.yield() )
+		end
+	end
+
+	function RunListener(
+		handle: (...any) -> (),
+		...
+	)
+		if FreeThread == nil then
+			task.spawn(CreateFreeThread)
+		end
+
+		task.spawn(
+			FreeThread :: thread,
+			handle, ...
+		)
+	end
+end
 
 -- Creates a ScriptSignal object
 function ScriptSignal.new()
@@ -70,6 +130,12 @@ function ScriptSignal.new()
 		_active = true,
 		_head = nil
 	}, ScriptSignal)
+end
+
+-- Returns a boolean determining if the object is a ScriptSignal
+function ScriptSignal.Is(object): boolean
+	return typeof(object) == 'table'
+		and getmetatable(object) == ScriptSignal
 end
 
 -- Returns a boolean determining if the ScriptSignal object is usable
@@ -110,7 +176,6 @@ function ScriptSignal:Connect(
 
 	local connection = setmetatable({
 		Connected = true,
-
 		_node = node
 	}, ScriptConnection)
 
@@ -169,7 +234,7 @@ function ScriptSignal:Fire(...)
 	local node = self._head
 	while node ~= nil do
 		if node._connection ~= nil then
-			task.defer(node._handle, ...)
+			RunListener(node._handle, ...)
 		end
 
 		node = node._next
