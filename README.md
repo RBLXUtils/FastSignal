@@ -8,6 +8,8 @@
 
 *Fast*Signal is a Signal library made with consistency and expectable behaviour in mind, it is efficient, easy to use, and widely compatible.
 
+Wally: `lucasmzreal/fastsignal@7.1.6`
+
 ## What about GoodSignal?
 
 GoodSignal while being an interesting implementation, sadly it suffers from some issues.
