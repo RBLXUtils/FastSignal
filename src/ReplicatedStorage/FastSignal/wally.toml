@@ -1,0 +1,9 @@
+[package]
+
+name = "lucasmzreal/fastsignal"
+version = "7.1.6"
+license = "MIT"
+authors = ["LucasMZReal"]
+
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
