@@ -1,0 +1,24 @@
+title = "FastSignal"  # From Git
+gitRepoUrl = "https://github.com/RBLXUtils/FastSignal" # From Git
+
+gitSourceBranch = "main"
+changelog = true
+classOrder = ["ScriptSignal", "ScriptConnection"]
+
+[home]
+enabled = false
+includeReadme = true
+
+[docusaurus]
+onBrokenLinks = "throw"
+onBrokenMarkdownLinks = "warn"
+
+# From git:
+organizationName = "RBLXUtils"
+projectName = "FastSignal"
+url = "https://RBLXUtils.github.io"
+baseUrl = "/FastSignal/"
+tagline = "Made with consistency and familiarity in mind"
+
+[footer]
+style = "dark"
