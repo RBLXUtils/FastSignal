@@ -1,11 +1,15 @@
 --[=[
 	@class ScriptSignal
+
+	A class which holds data and methods for ScriptSignals.
 ]=]
 local ScriptSignal = {}
 ScriptSignal.__index = ScriptSignal
 
 --[=[
 	@class ScriptConnection
+
+	A class which holds data and methods for ScriptConnections.
 ]=]
 local ScriptConnection = {}
 ScriptConnection.__index = ScriptConnection
@@ -16,19 +20,19 @@ ScriptConnection.__index = ScriptConnection
 	@within ScriptConnection
 	@ignore
 
-	A boolean which determines if a ScriptConnection is active or not
+	A boolean which determines if a ScriptConnection is active or not.
 ]=]
 
 local FreeThread: thread? = nil
 
 local function RunHandlerInFreeThread(
-	handle: (...any) -> (),
+	handler: (...any) -> (),
 	...
 )
 	local thread = FreeThread :: thread
 	FreeThread = nil
 
-	handle(...)
+	handler(...)
 
 	FreeThread = thread
 end
@@ -42,7 +46,7 @@ local function CreateFreeThread()
 end
 
 --[=[
-	Creates a ScriptSignal object
+	Creates a ScriptSignal object.
 
 	@return ScriptSignal
 	@ignore
@@ -55,7 +59,7 @@ function ScriptSignal.new()
 end
 
 --[=[
-	Returns a boolean determining if the object is a ScriptSignal
+	Returns a boolean determining if the object is a ScriptSignal.
 
 	```lua
 	local janitor = Janitor.new()
@@ -75,7 +79,7 @@ function ScriptSignal.Is(object): boolean
 end
 
 --[=[
-	Returns a boolean determing if a ScriptSignal object is active
+	Returns a boolean determing if a ScriptSignal object is active.
 
 	```lua
 	ScriptSignal:IsActive() -> true
@@ -91,7 +95,7 @@ function ScriptSignal:IsActive(): boolean
 end
 
 --[=[
-	Connects a function to the ScriptSignal
+	Connects a handler to a ScriptSignal object.
 
 	```lua
 	ScriptSignal:Connect(function(text)
@@ -104,15 +108,15 @@ end
 	-- "Something" and then "Something else" are printed
 	```
 
-	@param handle (...: any) -> ()
+	@param handler (...: any) -> ()
 	@return ScriptConnection
 	@ignore
 ]=]
 function ScriptSignal:Connect(
-	handle: (...any) -> ()
+	handler: (...any) -> ()
 )
 	assert(
-		typeof(handle) == 'function',
+		typeof(handler) == 'function',
 		"Must be function"
 	)
 
@@ -127,7 +131,7 @@ function ScriptSignal:Connect(
 	local node = {
 		_signal = self,
 		_connection = nil,
-		_handle = handle,
+		_handler = handler,
 
 		_next = _head,
 		_prev = nil
@@ -149,8 +153,8 @@ function ScriptSignal:Connect(
 end
 
 --[=[
-	Connects a function to a ScriptSignal object, but only allows that
-	connection to run once. any later fire calls won't trigger anything
+	Connects a handler to a ScriptSignal object, but only allows that
+	connection to run once. Any `:Fire` calls called afterwards won't trigger anything.
 
 	```lua
 	ScriptSignal:ConnectOnce(function()
@@ -163,14 +167,14 @@ end
 	-- "Connection fired" is only fired once
 	```
 
-	@param handle (...: any) -> ()
+	@param handler (...: any) -> ()
 	@ignore
 ]=]
 function ScriptSignal:ConnectOnce(
-	handle: (...any) -> ()
+	handler: (...any) -> ()
 )
 	assert(
-		typeof(handle) == 'function',
+		typeof(handler) == 'function',
 		"Must be function"
 	)
 
@@ -183,12 +187,12 @@ function ScriptSignal:ConnectOnce(
 		connection:Disconnect()
 		connection = nil
 
-		handle(...)
+		handler(...)
 	end)
 end
 
 --[=[
-	Yields the thread until a fire call happens, returns what the signal was fired with
+	Yields the thread until a `:Fire` call occurs, returns what the signal was fired with.
 
 	```lua
 	task.spawn(function()
@@ -226,7 +230,7 @@ function ScriptSignal:Wait(): (...any)
 end
 
 --[=[
-	Fires a ScriptSignal object with the arguments passed through it
+	Fires a ScriptSignal object with the arguments passed through it.
 
 	```lua
 	ScriptSignal:Connect(function(text)
@@ -251,7 +255,7 @@ function ScriptSignal:Fire(...)
 
 			task.spawn(
 				FreeThread :: thread,
-				node._handle, ...
+				node._handler, ...
 			)
 		end
 
@@ -260,16 +264,13 @@ function ScriptSignal:Fire(...)
 end
 
 --[=[
-	Disconnects all connections from a ScriptSignal object
-	without destroying it and without making it unusable
+	Disconnects all connections from a ScriptSignal object without making it unusable.
 
 	```lua
 	local connection = ScriptSignal:Connect(function() end)
 
 	connection.Connected -> true
-
 	ScriptSignal:DisconnectAll()
-
 	connection.Connected -> false
 	```
 
@@ -288,8 +289,7 @@ function ScriptSignal:DisconnectAll()
 end
 
 --[=[
-	Destroys a ScriptSignal object, disconnecting all connections
-	and making it unusable.
+	Destroys a ScriptSignal object, disconnecting all connection and making it unusable.
 
 	```lua
 	ScriptSignal:Destroy()
@@ -310,16 +310,14 @@ function ScriptSignal:Destroy()
 end
 
 --[=[
-	Disconnects a connection, any :Fire calls from now on would not
-	invoke this connection's function
+	Disconnects a connection, any `:Fire` calls from now on will not
+	invoke this connection's handler.
 
 	```lua
 	local connection = ScriptSignal:Connect(function() end)
 
 	connection.Connected -> true
-
 	connection:Disconnect()
-
 	connection.Connected -> false
 	```
 

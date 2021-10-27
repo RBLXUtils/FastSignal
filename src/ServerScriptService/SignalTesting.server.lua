@@ -61,3 +61,19 @@ local IsReverseOrder do
 		)
 	)
 end
+
+local ErrorTest do
+	local BindableEvent = Instance.new("BindableEvent")
+	BindableEvent.Event:Connect(function()
+		(2 + 2).cool()
+	end)
+
+	BindableEvent:Fire()
+
+	local Event = Signal.new()
+	Event:Connect(function()
+		(2 + 2).cool()
+	end)
+
+	Event:Fire()
+end
