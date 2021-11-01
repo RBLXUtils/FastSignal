@@ -311,7 +311,7 @@ function ScriptSignal:DisconnectAll()
 end
 
 --[=[
-	Destroys a ScriptSignal object, disconnecting all connection and making it unusable.
+	Destroys a ScriptSignal object, disconnecting all connections and making it unusable.
 
 	```lua
 	ScriptSignal:Destroy()
