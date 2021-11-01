@@ -16,29 +16,29 @@ local IsDeferred: boolean do
 	end
 end
 
-
 --[=[
-	@class ScriptSignal
-
 	A class which holds data and methods for ScriptSignals.
+
+	@class ScriptSignal
 ]=]
 local ScriptSignal = {}
 ScriptSignal.__index = ScriptSignal
 
 --[=[
-	@class ScriptConnection
-
 	A class which holds data and methods for ScriptConnections.
+
+	@class ScriptConnection
 ]=]
 local ScriptConnection = {}
 ScriptConnection.__index = ScriptConnection
 
 --[=[
+	A boolean which determines if a ScriptConnection is active or not.
+
 	@prop Connected boolean
-	@readonly
 	@within ScriptConnection
 
-	A boolean which determines if a ScriptConnection is active or not.
+	@readonly
 ]=]
 
 local RunListener
