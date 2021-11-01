@@ -158,7 +158,7 @@ function ScriptSignal:ConnectOnce(
 	)
 
 	local connection
-	connection = self:Connect(function(...)
+	connection = self:Connect(function(...: any)
 		if connection == nil then
 			return
 		end
@@ -193,7 +193,7 @@ function ScriptSignal:Wait(): (...any)
 		thread = coroutine.running()
 
 		local connection
-		connection = self:Connect(function(...)
+		connection = self:Connect(function(...: any)
 			if connection == nil then
 				return
 			end
@@ -224,7 +224,7 @@ end
 	@param ... any
 	@ignore
 ]=]
-function ScriptSignal:Fire(...)
+function ScriptSignal:Fire(...: any)
 	local node = self._head
 	while node ~= nil do
 		if node._connection ~= nil then
