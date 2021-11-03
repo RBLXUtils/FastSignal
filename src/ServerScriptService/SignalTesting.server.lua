@@ -226,3 +226,10 @@ local FireSpeed do
 			everything immediately.
 	]]
 end
+
+--[[
+	TODO:
+
+	* Add a Disconnect benchmark (this is gonna be interesting)
+	* Add a Wait benchmark (not so much because the thing that would make it slower is being removed)
+]]
