@@ -215,7 +215,14 @@ local FireSpeed do
 			FastSignal sometimes seems to win over GoodSignal in this case, by a small amount
 			though.
 
-			Note: Not recycling threads (and by extension, deferred mode) can cause
+			Note:
+
+			Not recycling threads (and by extension, deferred mode) can cause
 			the speed of firing to be 5x slower.
+
+			However, this is under a sceneario where the connected handler is empty.
+			Realistically, you might have some expensive connections.
+			Sometimes, that trade-off might be worth it for you, as firing wouldn't slow down
+			everything immediately.
 	]]
 end
