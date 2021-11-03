@@ -99,7 +99,7 @@ function ScriptSignal:Connect(
 		"Must be function"
 	)
 
-	if self._active == false then
+	if self._active ~= true then
 		return setmetatable({
 			Connected = false
 		}, ScriptConnection)
@@ -273,7 +273,7 @@ end
 	@ignore
 ]=]
 function ScriptSignal:Destroy()
-	if self._active == false then
+	if self._active ~= true then
 		return
 	end
 
