@@ -135,7 +135,10 @@ local ConnectSpeed do
 		This is expected as FastSignal uses two tables for connections and GoodSignal uses one.
 		FastSignal does this for memory management reasons, it prevents accidental leaks.
 
-		Results: Same as expectations
+		Results:
+
+			Well, the expectations sometimes are accurate, sometimes not, and when they're not
+			they can be a lot of times quite faster than GoodSignal. Don't know why.
 	]]
 end
 
@@ -284,6 +287,9 @@ local DisconnectBenchmark do
 			Things are not looking good for FastSignal here.
 
 		Results:
+
+			Well, they're basically the same.
+			Sometimes FastSignal is way slower, or sometimes very similar.
 
 	]]
 end
