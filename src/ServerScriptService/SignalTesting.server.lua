@@ -94,6 +94,8 @@ end
 
 warn("Benchmarks:")
 
+task.wait(5)
+
 local ConnectSpeed do
 	local function Benchmark(Event)
 		local Connect = Event.Connect
@@ -136,6 +138,8 @@ local ConnectSpeed do
 		Results: Same as expectations
 	]]
 end
+
+task.wait(5)
 
 local FireSpeed do
 	local Mode = "ConnectionStress" -- "NoConnections" / "ConnectionStress"
@@ -227,9 +231,68 @@ local FireSpeed do
 	]]
 end
 
+task.wait(5)
+
+local DisconnectBenchmark do
+	-- This test only benchmark the speed of a signal
+	-- that only has one node, where I expect FastSignal to lose, FastSignal
+	-- is optimized for multiple connections.
+
+	-- A benchmark for that might be added soon.
+
+	local function Benchmark(Event)
+		local totalTime = 0
+
+		local Disconnect = Event:Connect(EmptyFunction)
+		Disconnect = Disconnect:Disconnect() or Disconnect.Disconnect
+
+		for _ = 1, 1000 do
+			local connection = Event:Connect(EmptyFunction)
+
+			local timeTook = os.clock()
+			Disconnect(connection)
+			timeTook = os.clock() - timeTook
+
+			totalTime += timeTook
+		end
+
+		return totalTime
+	end
+
+	local RBXSignalTime = Benchmark( Instance.new("BindableEvent").Event )
+	local GoodSignalTime = Benchmark( GoodSignal.new() )
+	local FastSignalTime = Benchmark( FastSignal.new() )
+
+	warn(
+		(":Disconnect \n RBXScriptSignal: %s \n GoodSignal: %s \n FastSignal: %s")
+			:format(RBXSignalTime, GoodSignalTime, FastSignalTime)
+	)
+
+	--[[
+		Expectations:
+
+			BindableEvent loses by a long shot.
+
+			FastSignal loses to GoodSignal, GoodSignal doesn't have a previous reference
+			in its connection nodes, FastSignal does, and that's for disconnecting older
+			connections in an optimized manner, however, for single connections that means
+			that it would need one more table search.
+
+			FastSignal also has one extra table search for just finding the _node
+			reference on the ScriptConnection object.
+
+			Things are not looking good for FastSignal here.
+
+		Results:
+
+	]]
+end
+
+task.wait(5)
+
 --[[
 	TODO:
 
-	* Add a Disconnect benchmark (this is gonna be interesting)
+	* Add a alternative Disconnect benchmark which benchmarks disconnecting multiple connections
 	* Add a Wait benchmark (not so much because the thing that would make it slower is being removed)
 ]]
