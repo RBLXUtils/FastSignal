@@ -1,5 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local FastSignal = require(ReplicatedStorage.FastSignal.Immediate)
+local FastSignal = require(ReplicatedStorage.FastSignal)
 local GoodSignal = require(ReplicatedStorage.GoodSignal)
 
 task.wait(7.5)
@@ -7,6 +7,7 @@ task.wait(7.5)
 local function EmptyFunction()
 	-- Empty
 end
+
 
 local IsDeferred do
 	IsDeferred = false

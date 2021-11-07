@@ -1,9 +1,9 @@
 [package]
 
-name = "lucasmzreal/fastsignal"
-version = "7.1.6"
+name = "rblxutils/fastsignal"
+version = "10.0.0"
 license = "MIT"
-authors = ["LucasMZReal"]
+authors = ["RBLXUtils", "LucasMZReal"]
 
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"

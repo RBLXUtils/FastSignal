@@ -21,14 +21,12 @@ ScriptConnection.__index = ScriptConnection
 	@within ScriptConnection
 
 	@readonly
-	@ignore
 ]=]
 
 --[=[
 	Creates a ScriptSignal object.
 
 	@return ScriptSignal
-	@ignore
 ]=]
 function ScriptSignal.new()
 	return setmetatable({
@@ -50,7 +48,6 @@ end
 
 	@param object any
 	@return boolean
-	@ignore
 ]=]
 function ScriptSignal.Is(object): boolean
 	return typeof(object) == 'table'
@@ -67,7 +64,6 @@ end
 	```
 
 	@return boolean
-	@ignore
 ]=]
 function ScriptSignal:IsActive(): boolean
 	return self._active == true
@@ -89,7 +85,6 @@ end
 
 	@param handler (...: any) -> ()
 	@return ScriptConnection
-	@ignore
 ]=]
 function ScriptSignal:Connect(
 	handler: (...any) -> ()
@@ -147,7 +142,6 @@ end
 	```
 
 	@param handler (...: any) -> ()
-	@ignore
 ]=]
 function ScriptSignal:ConnectOnce(
 	handler: (...any) -> ()
@@ -186,7 +180,6 @@ end
 
 	@yields
 	@return ...any
-	@ignore
 ]=]
 function ScriptSignal:Wait(): (...any)
 	local thread do
@@ -222,7 +215,6 @@ end
 	```
 
 	@param ... any
-	@ignore
 ]=]
 function ScriptSignal:Fire(...: any)
 	local node = self._head
@@ -243,8 +235,6 @@ end
 	ScriptSignal:DisconnectAll()
 	connection.Connected -> false
 	```
-
-	@ignore
 ]=]
 function ScriptSignal:DisconnectAll()
 	local node = self._head
@@ -272,8 +262,6 @@ end
 	local connection = ScriptSignal:Connect(function() end)
 	connection.Connected -> false
 	```
-
-	@ignore
 ]=]
 function ScriptSignal:Destroy()
 	if self._active ~= true then
@@ -295,8 +283,6 @@ end
 	connection:Disconnect()
 	connection.Connected -> false
 	```
-
-	@ignore
 ]=]
 function ScriptConnection:Disconnect()
 	if self.Connected ~= true then
