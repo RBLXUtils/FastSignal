@@ -294,7 +294,7 @@ end
 	@ignore
 ]=]
 function ScriptConnection:Disconnect()
-	if self.Connected == false then
+	if self.Connected ~= true then
 		return
 	end
 
