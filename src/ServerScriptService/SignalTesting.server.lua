@@ -69,6 +69,29 @@ local IsReverseOrder do
 	)
 end
 
+local DestroyTest do
+	local Event = FastSignal.new()
+	local connection = Event:Connect(EmptyFunction)
+
+	Event:Destroy()
+
+	warn(
+		"Does :Destroy disconnect connections properly: ".. (
+			connection.Connected == false and connection._node == nil
+				and "Yes"
+				or "No"
+		)
+	)
+
+	warn(
+		"Does :Destroy make Signal not connect future connections: ".. (
+			Event:Connect(EmptyFunction).Connected == false
+				and "Yes"
+				or "No"
+		)
+	)
+end
+
 local ErrorTest do
 	warn("Error testing:")
 
