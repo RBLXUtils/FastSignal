@@ -209,7 +209,7 @@ function ScriptSignal:Wait(): (...any)
 end
 
 --[=[
-	Fires a ScriptSignal object with the arguments passed through it.
+	Fires a ScriptSignal object with the arguments passed.
 
 	```lua
 	ScriptSignal:Connect(function(text)
@@ -227,9 +227,7 @@ end
 function ScriptSignal:Fire(...: any)
 	local node = self._head
 	while node ~= nil do
-		if node._connection ~= nil then
-			task.defer(node._handler, ...)
-		end
+		task.defer(node._handler, ...)
 
 		node = node._next
 	end

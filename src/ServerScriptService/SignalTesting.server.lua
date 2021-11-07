@@ -1,5 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local FastSignal = require(ReplicatedStorage.FastSignal)
+local FastSignal = require(ReplicatedStorage.FastSignal.Immediate)
 local GoodSignal = require(ReplicatedStorage.GoodSignal)
 
 task.wait(7.5)
