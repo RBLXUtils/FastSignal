@@ -22,9 +22,9 @@ local ImmediateSignal = require(script.Immediate)
 export type Class = DeferredSignal.Class
 export type ScriptConnection = DeferredSignal.ScriptConnection
 
-local ChosenSignal = if IsDeferred
-	then DeferredSignal
-	else ImmediateSignal
+local ChosenSignal = IsDeferred
+	and DeferredSignal
+	or ImmediateSignal
 
 ChosenSignal.Deferred = DeferredSignal
 ChosenSignal.Immediate = ImmediateSignal

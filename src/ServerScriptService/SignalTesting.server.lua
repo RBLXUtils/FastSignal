@@ -8,7 +8,6 @@ local function EmptyFunction()
 	-- Empty
 end
 
-
 local IsDeferred do
 	IsDeferred = false
 
