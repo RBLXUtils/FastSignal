@@ -3,6 +3,6 @@
 registry = "test"
 
 [[package]]
-name = "rblxutils/fastsignal"
+name = "lucasmzreal/fastsignal"
 version = "10.0.0"
 dependencies = []

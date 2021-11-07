@@ -1,6 +1,6 @@
 [package]
 
-name = "rblxutils/fastsignal"
+name = "lucasmzreal/fastsignal"
 version = "10.0.0"
 license = "MIT"
 authors = ["RBLXUtils", "LucasMZReal"]
