@@ -23,12 +23,32 @@ ScriptConnection.__index = ScriptConnection
 	@readonly
 ]=]
 
+
+export type Class = typeof( setmetatable({
+	_active = true,
+	_head = nil :: ScriptConnectionNode?
+}, ScriptSignal) )
+
+export type ScriptConnection = typeof( setmetatable({
+	Connected = true,
+	_node = nil :: ScriptConnectionNode?
+}, ScriptConnection) )
+
+type ScriptConnectionNode = {
+	_signal: Class,
+	_connection: ScriptConnection?,
+	_handler: (...any) -> (),
+
+	_next: ScriptConnectionNode?,
+	_prev: ScriptConnectionNode?
+}
+
 --[=[
 	Creates a ScriptSignal object.
 
 	@return ScriptSignal
 ]=]
-function ScriptSignal.new()
+function ScriptSignal.new(): Class
 	return setmetatable({
 		_active = true,
 		_head = nil
@@ -88,7 +108,8 @@ end
 ]=]
 function ScriptSignal:Connect(
 	handler: (...any) -> ()
-)
+): ScriptConnection
+
 	assert(
 		typeof(handler) == 'function',
 		"Must be function"
@@ -96,14 +117,15 @@ function ScriptSignal:Connect(
 
 	if self._active ~= true then
 		return setmetatable({
-			Connected = false
+			Connected = false,
+			_node = nil
 		}, ScriptConnection)
 	end
 
-	local _head = self._head
+	local _head: ScriptConnectionNode? = self._head
 
-	local node = {
-		_signal = self,
+	local node: ScriptConnectionNode = {
+		_signal = self :: Class,
 		_connection = nil,
 		_handler = handler,
 
@@ -111,9 +133,10 @@ function ScriptSignal:Connect(
 		_prev = nil
 	}
 
-	if _head then
+	if _head ~= nil then
 		_head._prev = node
 	end
+
 	self._head = node
 
 	local connection = setmetatable({
@@ -123,7 +146,7 @@ function ScriptSignal:Connect(
 
 	node._connection = connection
 
-	return connection
+	return connection :: ScriptConnection
 end
 
 --[=[
@@ -152,7 +175,7 @@ function ScriptSignal:ConnectOnce(
 	)
 
 	local connection
-	connection = self:Connect(function(...: any)
+	connection = self:Connect(function(...)
 		if connection == nil then
 			return
 		end
@@ -186,7 +209,7 @@ function ScriptSignal:Wait(): (...any)
 		thread = coroutine.running()
 
 		local connection
-		connection = self:Connect(function(...: any)
+		connection = self:Connect(function(...)
 			if connection == nil then
 				return
 			end
@@ -217,7 +240,7 @@ end
 	@param ... any
 ]=]
 function ScriptSignal:Fire(...: any)
-	local node = self._head
+	local node: ScriptConnectionNode? = self._head
 	while node ~= nil do
 		task.defer(node._handler, ...)
 
@@ -237,7 +260,7 @@ end
 	```
 ]=]
 function ScriptSignal:DisconnectAll()
-	local node = self._head
+	local node: ScriptConnectionNode? = self._head
 	while node ~= nil do
 		local _connection = node._connection
 
@@ -291,15 +314,15 @@ function ScriptConnection:Disconnect()
 
 	self.Connected = false
 
-	local _node = self._node
-	local _prev = self._prev
-	local _next = self._next
+	local _node: ScriptConnectionNode = self._node
+	local _prev = _node._prev
+	local _next = _node._next
 
-	if _next then
+	if _next ~= nil then
 		_next._prev = _prev
 	end
 
-	if _prev then
+	if _prev ~= nil then
 		_prev._next = _next
 	else
 		-- _node == _signal._head
@@ -311,13 +334,5 @@ function ScriptConnection:Disconnect()
 	self._node = nil
 end
 ScriptConnection.Destroy = ScriptConnection.Disconnect
-
-export type Class = typeof(
-	ScriptSignal.new()
-)
-
-export type ScriptConnection = typeof(
-	ScriptSignal.new():Connect(function() end)
-)
 
 return ScriptSignal

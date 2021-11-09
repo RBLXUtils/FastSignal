@@ -29,4 +29,4 @@ local ChosenSignal = IsDeferred
 ChosenSignal.Deferred = DeferredSignal
 ChosenSignal.Immediate = ImmediateSignal
 
-return ChosenSignal
+return ChosenSignal :: typeof(DeferredSignal)

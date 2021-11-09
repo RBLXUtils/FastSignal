@@ -97,14 +97,14 @@ local ErrorTest do
 
 	local BindableEvent = Instance.new("BindableEvent")
 	BindableEvent.Event:Connect(function()
-		(2 + 2).cool()
+		error("FastSignal stacktrace test")
 	end)
 
 	BindableEvent:Fire()
 
 	local Event = FastSignal.new()
 	Event:Connect(function()
-		(2 + 2).cool()
+		error("FastSignal stacktrace test")
 	end)
 
 	Event:Fire()
