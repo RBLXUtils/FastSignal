@@ -183,7 +183,7 @@ end
 task.wait(5)
 
 local FireSpeed do
-	local Mode = "NoConnections" -- "NoConnections" / "ConnectionStress"
+	local Mode = "ConnectionStress" -- "NoConnections" / "ConnectionStress"
 
 	warn("Fire Benchmark Mode:", Mode)
 
