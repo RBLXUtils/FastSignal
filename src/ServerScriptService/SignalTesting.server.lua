@@ -168,7 +168,7 @@ end
 task.wait(5)
 
 local FireSpeed do
-	local Mode = "ConnectionStress" -- "NoConnections" / "ConnectionStress"
+	local Mode = "NoConnections" -- "NoConnections" / "ConnectionStress"
 
 	warn("Fire Benchmark Mode:", Mode)
 
@@ -311,8 +311,10 @@ local DisconnectBenchmark do
 
 		Results:
 
-			Well, they're basically the same.
-			Sometimes FastSignal is way slower, or sometimes very similar.
+			Note: After a BUG FIX of all things, FastSignal seems to be winning in
+			this benchmark sometimes, sometimes losing. As far as I tested,
+			FastSignal seems to be winning more frequently at least in machine.
+			This might not be the case for you.
 
 	]]
 end
@@ -323,5 +325,5 @@ task.wait(5)
 	TODO:
 
 	* Add a alternative Disconnect benchmark which benchmarks disconnecting multiple connections
-	* Add a Wait benchmark (not so much because the thing that would make it slower is being removed)
+	* Add a Wait benchmark
 ]]
