@@ -77,7 +77,7 @@ local DestroyTest do
 
 	warn(
 		"Does :Destroy disconnect connections properly: ".. (
-			connection.Connected == false and connection._node == nil
+			connection.Connected == false and connection._node == nil and Event._head == nil
 				and "Yes"
 				or "No"
 		)
