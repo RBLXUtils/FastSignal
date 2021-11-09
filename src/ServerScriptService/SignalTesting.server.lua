@@ -69,6 +69,21 @@ local IsReverseOrder do
 	)
 end
 
+local DisconnectTest do
+	local Event = FastSignal.new()
+	local connection = Event:Connect(EmptyFunction)
+
+	connection:Disconnect()
+
+	warn(
+		"Does :Disconnect disconnect a connection properly: ".. (
+			connection.Connected == false and connection.__node == nil and Event._head == nil
+				and "Yes"
+				or "No"
+		)
+	)
+end
+
 local DestroyTest do
 	local Event = FastSignal.new()
 	local connection = Event:Connect(EmptyFunction)
