@@ -6,22 +6,22 @@
 
 GoodSignal while being an interesting implementation, sadly it suffers from some issues.
 
-* GoodSignal does not support `.Connected`
+* GoodSignal does not support .Connected.
 
-* GoodSignal's `:Destroy` method is unproper, only "disconnecting" everything, but not preventing new connections from being connected
+* GoodSignal has no :Destroy, only :DisconnectAll which means you can’t stop new connections from being created.
 
-* GoodSignal's `:Destroy` does not `:Disconnect` connections properly.
+* GoodSignal’s :DisconnectAll does not call :Disconnect on connections, this causes an inconsistency with RBXScriptSignals.
 
-* GoodSignal's connection and linked list nodes are the same thing, which causes issues such as disconnected connections leaking the connection's function, signal, and other connections.
+* GoodSignal’s connections and linked list nodes are the same reference, which causes issues such as disconnected connections can leak the connection’s function, signal, and other connections if not cleared properly.
 
-* GoodSignal's classes are strict, this is pretty useless, and means that empty fields in a class are false, and not nil.
+* GoodSignal’s classes are strict, meaning you can index members that don’t exist, this is pretty useless, and means that empty fields in a class are false, and not nil, which is something that makes forking a bit harder and it takes a bit of time to process.
 
-* GoodSignal's connections are not compatible with [Janitor.](https://GitHub.com/howmanysmall/Janitor)
+* GoodSignal’s connections are not immediately compatible with Janitor, or Maid.
 
-* GoodSignal's methods don't have any type declaration at all, which would make it way nicer to use.
+* GoodSignal’s methods don’t have any type declaration at all, which would make it way nicer to use.
 
 *Fast*Signal fixes all these issues.
-*Fast*Signal's selling point is *consistency* and *familiarity*.
+*Fast*Signal's selling point is parity with RBXScriptSignal's API and *familiarity*.
 
 *Fast*Signal has a familiar API and behaviour to RBXScriptSignals and other signal libraries, which help you work faster, these help you not have headaches while using *Fast*Signal.
 
