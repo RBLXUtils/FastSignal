@@ -4,13 +4,15 @@
 
 ## What about GoodSignal?
 
-GoodSignal while being an interesting implementation, sadly it suffers from some issues.
+GoodSignal while being an interesting implementation (that even helped *Fast*Signal be developed), it suffers from some issues.
 
 * GoodSignal does not support .Connected.
 
+* GoodSignal is made only for Immediate mode, and does not have a Deferred mode option, while sleitnick's fork has `:FireDeferred`, it's not a very optimal solution as it's not a toggle, you have to go out of your way to use Deferred and it's inconvienient.
+
 * GoodSignal has no :Destroy, only :DisconnectAll which means you can’t stop new connections from being created.
 
-* GoodSignal’s :DisconnectAll does not call :Disconnect on connections, this causes an inconsistency with RBXScriptSignals.
+* GoodSignal’s :DisconnectAll does not call :Disconnect on connections, this causes an [inconsistency with RBXScriptSignals.](https://github.com/stravant/goodsignal/issues/4)
 
 * GoodSignal’s connections and linked list nodes are the same reference, which causes issues such as disconnected connections can leak the connection’s function, signal, and other connections if not cleared properly.
 
