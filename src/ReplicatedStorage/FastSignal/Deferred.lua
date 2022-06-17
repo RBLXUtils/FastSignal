@@ -154,7 +154,7 @@ end
 	connection to run once. Any `:Fire` calls called afterwards won't trigger anything.
 
 	```lua
-	ScriptSignal:ConnectOnce(function()
+	ScriptSignal:Once(function()
 		print("Connection fired")
 	end)
 
@@ -165,10 +165,11 @@ end
 	```
 
 	@param handler (...: any) -> ()
+	@return ScriptConnection
 ]=]
-function ScriptSignal:ConnectOnce(
+function ScriptSignal:Once(
 	handler: (...any) -> ()
-)
+): ScriptConnection
 	assert(
 		typeof(handler) == 'function',
 		"Must be function"
@@ -185,7 +186,10 @@ function ScriptSignal:ConnectOnce(
 
 		handler(...)
 	end)
+
+	return connection
 end
+ScriptSignal.ConnectOnce = ScriptSignal.Once
 
 --[=[
 	Yields the thread until a `:Fire` call occurs, returns what the signal was fired with.
