@@ -44,7 +44,7 @@ You can get FastSignal as a dependancy on Wally.
 Add `lucasmzreal/fastsignal` in your dependencies and you're done.
 
 ```toml
-Signal = "lucasmzreal/fastsignal@10.1.0"
+Signal = "lucasmzreal/fastsignal@10.2.0"
 ```
 
 <a href="https://github.com/LucasMZReal/FastSignal/releases">
