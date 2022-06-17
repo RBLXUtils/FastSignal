@@ -170,6 +170,7 @@ end
 function ScriptSignal:Once(
 	handler: (...any) -> ()
 ): ScriptConnection
+
 	assert(
 		typeof(handler) == 'function',
 		"Must be function"
