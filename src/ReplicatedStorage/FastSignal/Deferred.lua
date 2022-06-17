@@ -23,17 +23,6 @@ ScriptConnection.__index = ScriptConnection
 	@readonly
 ]=]
 
-
-export type Class = typeof( setmetatable({
-	_active = true,
-	_head = nil :: ScriptConnectionNode?
-}, ScriptSignal) )
-
-export type ScriptConnection = typeof( setmetatable({
-	Connected = true,
-	_node = nil :: ScriptConnectionNode?
-}, ScriptConnection) )
-
 type ScriptConnectionNode = {
 	_signal: Class,
 	_connection: ScriptConnection?,
@@ -339,5 +328,9 @@ function ScriptConnection:Disconnect()
 	self._node = nil
 end
 ScriptConnection.Destroy = ScriptConnection.Disconnect
+
+export type Class = typeof(ScriptSignal.new())
+
+export type ScriptConnection = typeof(ScriptSignal.new():Connect(function() end))
 
 return ScriptSignal
