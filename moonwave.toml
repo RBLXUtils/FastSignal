@@ -16,7 +16,7 @@ onBrokenMarkdownLinks = "warn"
 # From git:
 organizationName = "RBLXUtils"
 projectName = "FastSignal"
-url = "https://lucasmz.eu.org"
+url = "https://rblxutils.github.io"
 baseUrl = "/FastSignal"
 tagline = "Made with consistency and familiarity in mind"
 
