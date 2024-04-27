@@ -1,5 +1,5 @@
 title = "FastSignal"  # From Git
-gitRepoUrl = "https://github.com/RBLXUtils/FastSignal" # From Git
+gitRepoUrl = "https://gitlab.com/RBLXUtils/FastSignal" # From Git
 
 gitSourceBranch = "main"
 changelog = true
