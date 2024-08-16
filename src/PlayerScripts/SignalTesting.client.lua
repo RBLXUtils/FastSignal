@@ -2,7 +2,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local FastSignal = require(ReplicatedStorage.FastSignal)
 local GoodSignal = require(ReplicatedStorage.GoodSignal)
 
-task.wait(7.5)
+task.wait(5)
 
 local function EmptyFunction()
 	-- Empty
@@ -132,7 +132,7 @@ end
 
 warn("Benchmarks:")
 
-task.wait(5)
+task.wait(2.5)
 
 local ConnectSpeed do
 	local function Benchmark(Event)
@@ -180,7 +180,7 @@ local ConnectSpeed do
 	]]
 end
 
-task.wait(5)
+task.wait(2.5)
 
 local FireSpeed do
 	local Mode = "ConnectionStress" -- "NoConnections" / "ConnectionStress"
@@ -256,7 +256,7 @@ local FireSpeed do
 
 			GoodSignal and FastSignal are staying in 0.57 seconds, while
 			BindableEvents stay at a 0.43!
-
+500
 			FastSignal sometimes seems to win over GoodSignal in this case, by a small amount
 			though.
 
@@ -272,7 +272,7 @@ local FireSpeed do
 	]]
 end
 
-task.wait(5)
+task.wait(2.5)
 
 local DisconnectBenchmark do
 	-- This test only benchmark the speed of a signal
@@ -334,11 +334,74 @@ local DisconnectBenchmark do
 	]]
 end
 
-task.wait(5)
+task.wait(2.5)
+
+local DisconnectMultipleBenchmark do
+	local numberOfConnections = 1000
+	local mode = "Random" -- "Random" / "Ordered"
+	-- TODO: Implement Ordered
+
+	local function Benchmark(Signal)
+		local connections = table.create(numberOfConnections)
+		if mode == "Random" then
+			local allNumbers = {}
+			for i = 1, numberOfConnections do
+				allNumbers[i] = i
+			end
+	
+			local randomizedIndexes = table.create(numberOfConnections) do
+				local allNumbers = table.create(numberOfConnections) do
+					for i = 1, numberOfConnections do
+						allNumbers[i] = i
+					end
+				end
+				
+				while #allNumbers ~= 0 do
+					local randomNumber = math.random(1, #allNumbers)
+					table.insert(randomizedIndexes, allNumbers[randomNumber])
+					table.remove(allNumbers, randomNumber)
+				end
+			end
+
+			local connections = table.create(numberOfConnections)
+			for i = 1, numberOfConnections do
+				connections[ randomizedIndexes[i] ] = Signal:Connect(function()
+					
+				end)
+			end
+
+			local benchmarkTime = os.clock()
+			for _, connection in ipairs(connections) do
+				connection:Disconnect()
+			end
+			benchmarkTime = os.clock() - benchmarkTime
+
+			return benchmarkTime
+		end
+	end
+	
+	local results = {
+		["FastSignal"] = Benchmark(FastSignal.new());
+		["GoodSignal"] = Benchmark(GoodSignal.new());
+		["RBXScriptSignal"] = Benchmark(Instance.new("BindableEvent").Event)
+	}
+
+	warn("MultipleDisconnect:\n Mode:", mode, "Results:", results)
+
+	--[[
+		Conclusion:
+
+		It has been a while since I messed with Signals and Roblox overall, but I wanted to test this. This test is not fully implemented and there is more to do.
+		This test is meant to benchmark the benchmark of :Disconnect when indexes are chosen at random, e.g. with multiple connections on a single signal
+
+		In this test, the conclusion is that GoodSignal and RBXScriptSignal fall behind. This most likely has to do with FastSignal implementing a linked list with a
+		reference to the last node, while this adds a slight overhead for the previous benchmarks, it provides a better result for this.
+	]]
+end
 
 --[[
 	TODO:
 
-	* Add a alternative Disconnect benchmark which benchmarks disconnecting multiple connections
+	* Add a alternative Disconnect benchmark which benchmarks disconnecting multiple connections (almost done)
 	* Add a Wait benchmark
 ]]
