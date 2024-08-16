@@ -380,13 +380,19 @@ local DisconnectMultipleBenchmark do
 		end
 	end
 	
-	local results = {
-		["FastSignal"] = Benchmark(FastSignal.new());
-		["GoodSignal"] = Benchmark(GoodSignal.new());
-		["RBXScriptSignal"] = Benchmark(Instance.new("BindableEvent").Event)
-	}
+	local results = "" do
+		local resultsTable = {
+			["FastSignal"] = Benchmark(FastSignal.new());
+			["GoodSignal"] = Benchmark(GoodSignal.new());
+			["RBXScriptSignal"] = Benchmark(Instance.new("BindableEvent").Event)
+		}
 
-	warn("MultipleDisconnect:\n Mode:", mode, "Results:", results)
+		for signal, time in pairs(resultsTable) do
+			results ..= "\n".. signal.. ": ".. time
+		end
+	end
+
+	warn("MultipleDisconnect:\n Mode:", mode, "\nResults:", results)
 
 	--[[
 		Conclusion:
