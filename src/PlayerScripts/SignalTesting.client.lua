@@ -349,7 +349,7 @@ local DisconnectMultipleBenchmark do
 				allNumbers[i] = i
 			end
 	
-			local randomizedIndexes = table.create(numberOfConnections) do
+			local randomizedIndexes = table.create(numberOfConnections) do -- TODO: Ideally, this list should be used for every signal the same way, that way the level of difficulty is consistent.
 				local allNumbers = table.create(numberOfConnections) do
 					for i = 1, numberOfConnections do
 						allNumbers[i] = i
