@@ -124,10 +124,3 @@ local ErrorTest do
 
 	Event:Fire()
 end
-
---[[
-	TODO:
-
-	* Add a alternative Disconnect benchmark which benchmarks disconnecting multiple connections (almost done)
-	* Add a Wait benchmark
-]]
