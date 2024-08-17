@@ -1,3 +1,7 @@
+--[[
+	This script deals with typing and automatic choosing of the right variant.
+]]
+
 local IsDeferred: boolean do
 	IsDeferred = false
 
@@ -12,21 +16,34 @@ local IsDeferred: boolean do
 	bindable:Destroy()
 
 	if handlerRun == false then
+		-- In Deferred mode, things run "later", we can take advantage of this to detect the mode active,
+		-- by checking whether a :Fire call manages to change a variable right away, we are able to detect
+		-- whether Immediate or Deferred mode is being used.
+		
 		IsDeferred = true
 	end
 end
 
-local DeferredSignal = require(script.Deferred)
-local ImmediateSignal = require(script.Immediate)
+-- These were copied and modified from sleitnick's fork of GoodSignal, thanks sleitnick!
+export type ScriptSignal<T...> = {
+	IsActive: (self: ScriptSignal<T...>) -> boolean,
+	Fire: (self: ScriptSignal<T...>, T...) -> (),
+	Connect: (self: ScriptSignal<T...>, callback: (T...) -> ()) -> ScriptConnection,
+	Once: (self: ScriptSignal<T...>, callback: (T...) -> ()) -> ScriptConnection,
+	DisconnectAll: (self: ScriptSignal<T...>) -> (),
+	Destroy: (self: ScriptSignal<T...>) -> (),
+	Wait: (self: ScriptSignal<T...>) -> T...,
+}
+export type ScriptConnection = {
+	Disconnect: (self: ScriptConnection) -> (),
+	Connected: boolean,
+}
 
-export type Class = DeferredSignal.Class
-export type ScriptConnection = DeferredSignal.ScriptConnection
+-- Legacy type. Do not use in newer work.
+export type Class = ScriptSignal<...any>
 
 local ChosenSignal = IsDeferred
-	and DeferredSignal
-	or ImmediateSignal
+	and require(script.Deferred)
+	or require(script.Immediate)
 
-ChosenSignal.Deferred = DeferredSignal
-ChosenSignal.Immediate = ImmediateSignal
-
-return ChosenSignal :: typeof(DeferredSignal)
+return ChosenSignal :: typeof(require(script.Deferred))
