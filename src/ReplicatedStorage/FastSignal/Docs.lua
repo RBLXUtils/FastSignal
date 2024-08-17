@@ -56,7 +56,7 @@ ScriptConnection.__index = ScriptConnection
 
 	@return ScriptSignal
 ]=]
-function ScriptSignal.new(): ScriptSignal
+function ScriptSignal.new()
 	return {}
 end
 
@@ -224,7 +224,7 @@ end
 -- Stricter type
 local returnType = {}
 
-function returnType.new(): ScriptSignal
+function returnType.new<T...>(): ScriptSignal<T...>
 	return ScriptSignal.new()
 end
 
