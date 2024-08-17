@@ -1,3 +1,7 @@
+--!optimize 2
+--!nocheck
+--!native
+
 -- These were copied and modified from sleitnick's fork of GoodSignal, thanks sleitnick!
 export type ScriptSignal<T...> = {
 	IsActive: (self: ScriptSignal<T...>) -> boolean,

@@ -1,3 +1,6 @@
+--!optimize 2
+--!nocheck
+--!native
 
 --[[
     Expectations:

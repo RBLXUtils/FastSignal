@@ -1,3 +1,7 @@
+--!optimize 2
+--!nocheck
+--!native
+
 --[[
 	This script deals with typing and automatic choosing of the right variant.
 ]]

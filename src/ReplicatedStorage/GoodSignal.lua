@@ -1,3 +1,7 @@
+--!optimize 2
+--!nocheck
+--!native
+
 -- Licensed under the MIT License by stravant
 -- Slight modifications by LucasMZ_RBX for compatibility with Benchmarking code
 
