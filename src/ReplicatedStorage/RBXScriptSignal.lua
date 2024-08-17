@@ -12,11 +12,11 @@ function Signal.new()
 end
 
 function Signal:Connect(callback)
-	return self._bindable:Connect(callback)
+	return self._bindable.Event:Connect(callback)
 end
 
 function Signal:Wait()
-	return self._bindable:Wait()
+	return self._bindable.Event:Wait()
 end
 
 function Signal:Fire(...)
