@@ -3,12 +3,23 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ScriptSignal = require(ReplicatedStorage.FastSignal)
 
-local Event = ScriptSignal.new()
+local AutomaticType do
+	local Event = ScriptSignal.new()
 
-local function TypeTest(arg: string)
-	return arg
+	Event:Connect(function()
+		
+	end)
 end
 
-Event:Connect(function()
-	
-end)
+local GenericTypes do
+	local Event: ScriptSignal.ScriptSignal<{
+		Member1: string,
+		Member2: number
+	}> = ScriptSignal.new()
+
+	-- Roblox LSP seems to complain, IG they don't support generic types?
+	Event:Connect(function(info)
+		info.Member1 += 10 -- Should complain
+		info.Member2 ..= "what" -- Should complain
+	end)
+end
