@@ -7,7 +7,8 @@ local SignalTypes: {
 	}
 } = {
 	GoodSignal = require(ReplicatedStorage.GoodSignal),
-	FastSignal = require(ReplicatedStorage.FastSignal)
+	FastSignal = require(ReplicatedStorage.FastSignal),
+	RBXScriptSignal = require(ReplicatedStorage.RBXScriptSignal)
 }
 
 local Benchmarks: {ModuleScript} = {} do
