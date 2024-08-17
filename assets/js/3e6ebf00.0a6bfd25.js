@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[38],{63891:s=>{s.exports=JSON.parse('{"sourceUrl":"https://github.com/RBLXUtils/FastSignal/blob/main","baseUrl":"/FastSignal/","classOrder":["ScriptSignal","ScriptConnection"],"apiCategories":[]}')}}]);
