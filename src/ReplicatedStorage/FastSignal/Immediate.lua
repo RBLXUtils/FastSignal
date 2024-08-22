@@ -138,7 +138,7 @@ function ScriptSignal:Fire(...)
 			end
 
 			task.spawn(
-				FreeThread,
+				FreeThread :: thread,
 				node._handler, ...
 			)
 		end
