@@ -3,17 +3,17 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local SignalTypes: {
-	[string]: {
-		new: () -> RBXScriptSignal,
-		[any]: any
-	}
-} = {
+local SignalTypes= {
 	GoodSignal = require(ReplicatedStorage.GoodSignal),
 	FastSignal = require(ReplicatedStorage.FastSignal),
 	RBXScriptSignal = require(ReplicatedStorage.RBXScriptSignal),
 	LemonSignal = require(ReplicatedStorage.LemonSignal)
-}
+} :: {
+	[string]: {
+		new: () -> RBXScriptSignal,
+		[any]: any
+	}
+} 
 
 local Benchmarks: {ModuleScript} = {} do
 	local children = script:GetChildren()
