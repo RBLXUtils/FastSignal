@@ -1,7 +1,7 @@
 --!strict
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ScriptSignal = require(ReplicatedStorage.FastSignal)
+local ScriptSignal = require(ReplicatedStorage.FastSignal.Immediate)
 
 local AutomaticType do
 	local Event = ScriptSignal.new()

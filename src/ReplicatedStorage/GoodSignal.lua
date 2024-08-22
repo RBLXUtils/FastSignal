@@ -1,5 +1,4 @@
 --!optimize 2
---!nocheck
 --!native
 
 -- Licensed under the MIT License by stravant

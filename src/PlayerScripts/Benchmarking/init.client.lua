@@ -1,5 +1,4 @@
 --!optimize 2
---!nocheck
 --!native
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
