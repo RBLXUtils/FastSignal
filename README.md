@@ -8,7 +8,7 @@ GoodSignal while being an interesting implementation (that even helped *Fast*Sig
 
 * GoodSignal does not support .Connected.
 
-* GoodSignal is made only for Immediate mode, and does not have a Deferred mode option, while sleitnick's fork has `:FireDeferred`, it's not a very optimal solution as it's not a toggle, you have to go out of your way to use Deferred and it's inconvienient.
+* GoodSignal is made only for Immediate mode, and does not have a Deferred mode option, while sleitnick's fork has `:FireDeferred`, it's not a very optimal solution as it's not a toggle, you have to go out of your way to use Deferred and it's inconvenient.
 
 * GoodSignal has no :Destroy, only :DisconnectAll which means you can’t stop new connections from being created.
 
