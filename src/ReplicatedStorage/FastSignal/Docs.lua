@@ -79,7 +79,7 @@ function ScriptSignal.Is(object)
 end
 
 --[=[
-	Returns a boolean determing if a ScriptSignal object is active.
+	Returns a boolean which determines if a ScriptSignal object is active.
 
 	```lua
 	ScriptSignal:IsActive() -> true

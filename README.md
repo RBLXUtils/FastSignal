@@ -1,6 +1,6 @@
 # [*Fast*Signal](https://github.com/RBLXUtils/FastSignal)
 
-*Fast*Signal is a Signal library made with consistency and expectable behaviour in mind, it is efficient, easy to use, and widely compatible.
+*Fast*Signal is a Signal library made with consistency and expectable behavior in mind, it is efficient, easy to use, and widely compatible.
 
 ## What about GoodSignal?
 
@@ -25,7 +25,7 @@ GoodSignal while being an interesting implementation (that even helped *Fast*Sig
 *Fast*Signal fixes all these issues.
 *Fast*Signal's selling point is parity with RBXScriptSignal's API and *familiarity*.
 
-*Fast*Signal has a familiar API and behaviour to RBXScriptSignals and other signal libraries, which help you work faster, these help you not have headaches while using *Fast*Signal.
+*Fast*Signal has a familiar API and behavior to RBXScriptSignals and other signal libraries, which help you work faster, these help you not have headaches while using *Fast*Signal.
 
 ## Installation
 
@@ -40,7 +40,7 @@ You can find it [here.](https://www.roblox.com/library/6532460357)
 
 ### From Wally
 
-You can get FastSignal as a dependancy on Wally.
+You can get FastSignal as a dependency on Wally.
 Add `lucasmzreal/fastsignal` in your dependencies and you're done.
 
 ```toml
