@@ -4,10 +4,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ScriptSignal = require(ReplicatedStorage.FastSignal.Immediate)
 
 local AutomaticType do
-	local Event = ScriptSignal.new()
+	local Event: ScriptSignal.ScriptSignal<{number}> = ScriptSignal.new()
 
-	Event:Connect(function()
-		
+	Event:Connect(function(array)
+		array[1] ..= "what"
+		array[2] += 5
 	end)
 end
 
