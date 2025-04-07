@@ -3,7 +3,7 @@
 --!native
 
 --[[
-	This script deals with typing and automatic choosing of the right variant.
+	This script deals with typing and automatic choosing of the right variant depending on what your experience is currently running.
 ]]
 
 local IsDeferred: boolean do
@@ -47,7 +47,7 @@ export type ScriptConnection = {
 export type Class = ScriptSignal<...any>
 
 local ChosenSignal: typeof( require(script.Docs) ) = IsDeferred
-	and require(script.Deferred)
+	and require(script.Main)
 	or require(script.Immediate)
 
 return ChosenSignal
