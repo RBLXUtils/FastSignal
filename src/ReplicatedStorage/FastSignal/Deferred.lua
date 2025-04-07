@@ -186,4 +186,4 @@ function ScriptConnection:Disconnect()
 end
 ScriptConnection.Destroy = ScriptConnection.Disconnect
 
-return ScriptSignal
+return ScriptSignal :: typeof( require(script.Parent.Docs) )

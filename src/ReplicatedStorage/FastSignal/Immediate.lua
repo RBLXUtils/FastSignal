@@ -75,4 +75,4 @@ function ScriptSignal:Fire(...)
 	end
 end
 
-return ScriptSignal
+return ScriptSignal :: typeof( require(script.Parent.Docs) )
