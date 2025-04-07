@@ -19,7 +19,7 @@ export type ScriptConnection = {
 -- Legacy type. Do not use in newer work.
 export type Class = ScriptSignal<...any>
 
-local MainScriptSignal = require(script.Parent.Main)
+local MainScriptSignal = require(script.Parent.Deferred)
 
 local ScriptSignal = {} do
 	for methodName, method in pairs(MainScriptSignal) do

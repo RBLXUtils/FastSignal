@@ -47,7 +47,7 @@ export type ScriptConnection = {
 export type Class = ScriptSignal<...any>
 
 local ChosenSignal: typeof( require(script.Docs) ) = IsDeferred
-	and require(script.Main)
+	and require(script.Deferred)
 	or require(script.Immediate)
 
 return ChosenSignal
