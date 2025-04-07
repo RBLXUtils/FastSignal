@@ -26,4 +26,4 @@
 	Preferably, use Deferred behavior.
 ]]
 
-return "Readme.lua"
+return error("Not meant to run.")
