@@ -6,7 +6,6 @@ if true then
 	error("This is not supposed to run!")
 end
 
--- These were copied and modified from sleitnick's fork of GoodSignal, thanks sleitnick!
 export type ScriptSignal<T...> = {
 	IsActive: (self: ScriptSignal<T...>) -> boolean,
 	Fire: (self: ScriptSignal<T...>, T...) -> (),
