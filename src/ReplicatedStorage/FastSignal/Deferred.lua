@@ -115,8 +115,9 @@ function ScriptSignal:Wait()
 
 			connection:Disconnect()
 			connection = nil
-
-			task.spawn(thread, ...)
+			if coroutine.status(thread) == "suspended" then
+				task.spawn(thread, ...)
+			end
 		end)
 	end
 
