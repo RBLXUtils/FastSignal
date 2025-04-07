@@ -53,6 +53,11 @@ function ScriptSignal.new()
 	}, ScriptSignal)
 end
 
+function ScriptSignal.Is(object)
+	return typeof(object) == 'table'
+		and getmetatable(object) == ScriptSignal
+end
+
 function ScriptSignal:Fire(...)
 	local node = self._head
 	while node ~= nil do
